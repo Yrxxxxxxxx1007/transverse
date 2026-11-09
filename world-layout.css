@@ -45,7 +45,7 @@
 .world-shell[data-type="pixel"] .step-content h2 { font-size: clamp(18px, 2.6vw, 27px); }
 .world-name { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; color: var(--world-ink); font-size: 12px; font-weight: 730; margin-bottom: 4px; }
 .world-name .eyebrow { padding: 3px 6px; border: 1px solid var(--world-edge); border-radius: var(--readout-radius); background: var(--world-panel); }
-.world-shell .save-mark .status-dot { background: var(--world-accent2); box-shadow: none; }
+.world-shell .save-mark .status-dot { background: var(--world-saved); box-shadow: none; }
 .world-shell .tag-dot { background: var(--world-accent2); box-shadow: 0 0 8px var(--world-accent2); }
 .world-shell .life-dots .current, .world-shell .route-track li.current svg { background: var(--trim); border-color: var(--world-accent); }
 .world-shell .life-dots .passed, .world-shell .route-track li, .world-shell .route-track li.passed svg { color: var(--world-muted); }
@@ -146,6 +146,11 @@
 .world-shell[data-layout="folio"] .arena { grid-template: "top top" auto "figure readouts" minmax(225px, 1fr) / minmax(140px, 1.25fr) minmax(160px, 1fr); }
 .world-shell[data-layout="folio"] .arena-readouts { grid-template-columns: minmax(0, 1fr); align-content: end; padding: 5px 10px 10px 0; }
 .world-shell[data-layout="folio"] .readout { min-height: 62px; }
+
+@media (min-width: 711px) and (max-height: 820px) {
+  .world-shell .arena { min-height: 276px; }
+  .arena-figure > img, .arena-figure > svg { width: 151px; height: 151px; }
+}
 
 @media (max-width: 710px) {
   .hero-image { background-position: 65% center; }

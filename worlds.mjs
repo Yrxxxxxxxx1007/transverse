@@ -42,7 +42,9 @@ export const styles = rows.map(([zh, en, family, type, colors], id) => {
 function lookHash(value) {
   let h = 2166136261;
   for (const ch of value) h = Math.imul(h ^ ch.charCodeAt(0), 16777619);
-  return h >>> 0;
+  h = Math.imul(h ^ (h >>> 16), 0x85ebca6b);
+  h = Math.imul(h ^ (h >>> 13), 0xc2b2ae35);
+  return (h ^ (h >>> 16)) >>> 0;
 }
 
 export function appearance(run, game) {
@@ -52,7 +54,7 @@ export function appearance(run, game) {
   const encounter = `${run}|${game.life}|${game.camp ? 'camp' : game.stage}`;
   return {
     theme: game.field === 'II' ? other : first,
-    actor: styles[lookHash(`${encounter}|actor`) % styles.length],
+    actor: lookHash(`${encounter}|actor`) % styles.length,
     form: lookHash(`${encounter}|portrait`) % 4,
     sceneSeed: lookHash(`${run}|${game.field}|scene`),
     figureSeed: lookHash(`${encounter}|details`),
