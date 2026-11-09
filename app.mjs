@@ -1,4 +1,4 @@
-import { lab, name, words } from './copy.mjs';
+import { lab, name, words } from './copy.mjs?v=4';
 import { icon, sigil } from './icons.mjs';
 import { appearance, styles, worldAsset } from './worlds.mjs';
 import './world-scenes.js';
@@ -29,15 +29,14 @@ let logTab = 'log';
 let research = null;
 let researchError = null;
 let exporting = false;
-let atlasId = 14;
-const atlasNumber = id => String(id + 1).padStart(2, '0');
+const universeNumber = id => String(id + 1).padStart(2, '0');
 
 const brand = () => `<a class="brand" href="${pageUrl('/')}" data-page="/" aria-label="${name} · ${lab}"><img src="${basePath}mark.svg" width="42" height="42" alt=""><span class="brand-text"><strong>${name}</strong><small>${lab}</small></span></a>`;
 
 function header() {
   const playMenu = page === '/play' && session;
   return `<header class="site-head"><div class="frame head-inner">${brand()}
-    ${page === '/' ? `<nav aria-label="${t.home}"><a href="#atlas">${t.worldTitle}</a><a href="#expeditions">${t.how}</a><a href="#data">${t.data}</a></nav>` : `<span class="head-location">${page === '/research' ? t.research : lab}</span>`}
+    ${page === '/' ? `<nav aria-label="${t.home}"><a href="#expeditions">${t.how}</a><a href="#data">${t.data}</a></nav>` : `<span class="head-location">${page === '/research' ? t.research : lab}</span>`}
     <div class="head-tools">${playMenu ? `<button type="button" class="icon-button" data-ui="menu" aria-label="${t.menu}" title="${t.menu}">${icon('menu', 20)}</button>` : ''}
       <div class="language" role="group" aria-label="${t.language}"><button type="button" data-lang="en" lang="en" aria-pressed="${lang === 'en'}">EN</button><button type="button" data-lang="zh" lang="zh-CN" aria-pressed="${lang === 'zh'}">中文</button></div>
     </div></div></header>`;
@@ -47,28 +46,16 @@ function footer() {
   return `<footer class="site-foot frame"><span><span class="foot-dot"></span>${name} · ${lab}</span><a href="${pageUrl('/research')}" ${backend ? '' : 'data-page="/research"'}>${t.research}${icon('diagonal', 14)}</a></footer>`;
 }
 
-function atlasStage() {
-  const theme = styles[atlasId];
-  const look = { theme, actor: atlasId, form: atlasId % 4, sceneSeed: 6437, figureSeed: 8541 };
-  return `<figure class="atlas-preview world-shell" data-world="${theme.id}">
-    <div class="atlas-scene" aria-hidden="true">${sceneArt(look)}</div><div class="atlas-portrait" aria-hidden="true">${portraitArt(look)}</div>
-    <span class="atlas-stamp">${icon('orbit', 17)} ${t.atlasPreview}</span><span class="atlas-coordinate" aria-hidden="true">U–${atlasNumber(theme.id)}</span>
-    <figcaption><span>${t.atlasNumber(atlasNumber(theme.id))}</span><strong>${theme[lang]}</strong></figcaption></figure>`;
-}
-
-function atlas() {
-  return `<section class="home-section world-archive" id="atlas"><div class="section-head"><p class="eyebrow">${t.worldKicker}</p><h2>${t.worldTitle}</h2><p>${t.worldIntro}</p></div>
-    <div class="atlas-console"><div id="atlas-viewport">${atlasStage()}</div><div class="atlas-index">
-      <div class="atlas-index-title"><h3>${t.atlasIndex}</h3>${icon('orbit', 24)}</div>
-      <div class="atlas-grid" role="group" aria-label="${t.atlasIndex}">${styles.map(theme => `<button type="button" class="atlas-node" data-atlas="${theme.id}" aria-controls="atlas-viewport" aria-pressed="${theme.id === atlasId}" aria-label="${t.atlasNumber(atlasNumber(theme.id))}, ${theme[lang]}" title="${theme[lang]}">${atlasNumber(theme.id)}</button>`).join('')}</div>
-    </div></div></section>`;
-}
-
-function selectAtlas(id) {
-  atlasId = id;
-  document.querySelector('#atlas-viewport').innerHTML = atlasStage();
-  for (const button of app.querySelectorAll('[data-atlas]')) button.setAttribute('aria-pressed', String(Number(button.dataset.atlas) === id));
-  announcer.textContent = `${t.atlasNumber(atlasNumber(id))}, ${styles[id][lang]}`;
+function expeditionSteps() {
+  const stages = [
+    { universe: 'I', scene: 14, iconName: 'compass' },
+    { universe: 'I', scene: 14, iconName: 'note' },
+    { universe: 'II', scene: 22, iconName: 'orbit' },
+  ];
+  return stages.map(({ universe, scene, iconName }, index) => `<article class="phase-tile">
+    <div class="phase-scene"><img src="${basePath}${worldAsset(scene)}" alt="" loading="lazy" decoding="async"><div class="phase-coordinates"><span>${icon('orbit', 13)} ${t.universe} ${universe}</span><span class="phase-number">0${index + 1}</span></div></div>
+    <div class="phase-content"><h3>${icon(iconName, 18)} ${t.phases[index][0]}</h3><p>${t.phases[index][1]}</p></div>
+  </article>`).join('');
 }
 
 function home() {
@@ -81,9 +68,8 @@ function home() {
         <ul class="hero-facts"><li>${icon('layers', 16)}${t.roundsMeta}</li><li>${icon('orbit', 16)}${t.worldMeta}</li><li>${icon('monitor', 16)}${t.deviceMeta}</li></ul>
       </div><p class="hero-plate">${t.heroCaption}<span></span></p>
     </section>
-    ${atlas()}
     <section class="home-section" id="expeditions"><div class="section-head"><p class="eyebrow">${t.flowKicker}</p><h2>${t.flowTitle}</h2><p>${t.flowIntro}</p></div>
-      <div class="phase-grid">${t.phases.map(([title, description], index) => `<article class="phase-tile"><div class="phase-top"><span class="phase-icon">${icon(['compass', 'note', 'orbit'][index], 25)}</span><span class="phase-number">0${index + 1}</span></div><h3>${title}</h3><p>${description}</p></article>`).join('')}</div>
+      <div class="phase-grid">${expeditionSteps()}</div>
     </section>
     <div class="home-info"><section class="info-tile" id="help"><p class="eyebrow">${t.helpKicker}</p><h2>${t.helpTitle}</h2><p>${t.helpText}</p></section><section class="info-tile" id="data"><p class="eyebrow">${t.dataKicker}</p><h2>${t.dataTitle}</h2><p>${t.dataText}</p></section></div>
   </main>`;
@@ -97,7 +83,7 @@ function pathBar(g) {
 }
 
 function expeditionBar(g, theme) {
-  return `<div class="run-top"><div class="run-title"><div class="world-name"><span class="eyebrow">${icon('orbit', 14)} ${t.universe} ${g.field}</span><span>${theme[lang]}</span><span class="world-coordinate" aria-hidden="true">U–${atlasNumber(theme.id)}</span></div><h1>${t.expedition} <span>${String(g.life).padStart(2, '0')}</span><small> / 03</small></h1></div>
+  return `<div class="run-top"><div class="run-title"><div class="world-name"><span class="eyebrow">${icon('orbit', 14)} ${t.universe} ${g.field}</span><span>${theme[lang]}</span><span class="world-coordinate" aria-hidden="true">U–${universeNumber(theme.id)}</span></div><h1>${t.expedition} <span>${String(g.life).padStart(2, '0')}</span><small> / 03</small></h1></div>
     <div class="run-top-right"><div class="life-dots" aria-label="${t.expedition} ${g.life} / 3">${[1,2,3].map(number => `<span class="${number === g.life ? 'current' : number < g.life ? 'passed' : ''}">${number < g.life ? icon('check', 13) : `0${number}`}</span>`).join('')}</div><div class="save-mark" id="save-mark"><span class="status-dot"></span><span>${busy ? t.saving : t.saved}</span></div></div></div>`;
 }
 
@@ -317,7 +303,7 @@ async function move(kind, fields = {}) {
   const draft = kind === 'note' ? draftKey(game) : null;
   updateBusy();
   try {
-    const data = await api('/api/action', { kind, ...fields, version: session.version, lang, ui: 'transverse-3' });
+    const data = await api('/api/action', { kind, ...fields, version: session.version, lang, ui: 'transverse-4' });
     if (data.session) {
       session = data.session;
       if (data.status === 409) alert = 'outOfSync';
@@ -388,7 +374,6 @@ app.addEventListener('click', event => {
   const d = control.dataset;
   if (d.lang) { lang = d.lang; putStorage('agii:language', lang); render(); }
   else if (d.page && !event.ctrlKey && !event.metaKey && !event.shiftKey && !event.altKey) { event.preventDefault(); go(d.page); }
-  else if (d.atlas !== undefined) selectAtlas(Number(d.atlas));
   else if (d.tab) { logTab = d.tab; render(); }
   else if (d.action === 'skip') move('note', { text: '' });
   else if (d.action) move(d.action, d.index === undefined ? {} : { index: Number(d.index) });
