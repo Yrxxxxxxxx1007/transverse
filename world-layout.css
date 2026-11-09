@@ -4,12 +4,6 @@
   font-display: swap;
 }
 
-.hero { background-color: #14111e; }
-.hero-image { background-position: 58% center; }
-.hero-shade {
-  background: linear-gradient(90deg, #101114f7, #101114d9 22%, #10111445 48%, transparent 72%), linear-gradient(0deg, #15121990, transparent 36%);
-}
-
 .world-shell {
   --ink: var(--world-ink);
   --muted: var(--world-muted);
@@ -151,8 +145,6 @@
 }
 
 @media (max-width: 710px) {
-  .hero-image { background-position: 65% center; }
-  .hero-shade { background: linear-gradient(90deg, #101114f2, #101114b7 47%, #10111455), linear-gradient(0deg, #151219ac, transparent 47%); }
   .world-shell .arena { min-height: 239px; grid-template-rows: auto minmax(115px, 1fr) auto; }
   .arena-figure > img, .arena-figure > svg { width: 112px; height: 112px; }
   .world-shell .arena-top { margin: 6px 7px 0; }

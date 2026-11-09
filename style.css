@@ -50,10 +50,13 @@ svg { flex-shrink: 0; vertical-align: middle; }
 .icon-button { display: grid; place-items: center; width: 40px; height: 40px; border: 1px solid var(--line); border-radius: 7px; background: #191a1e; color: var(--muted); }
 .icon-button:hover { color: var(--ink); border-color: var(--line-warm); }
 .home-main { padding-top: 34px; }
-.hero { position: relative; min-height: 568px; display: flex; align-items: center; isolation: isolate; overflow: hidden; border: 1px solid #413831; border-radius: 13px; background: #16151a; }
+.hero { position: relative; min-height: 568px; display: flex; align-items: center; isolation: isolate; overflow: hidden; border: 1px solid #413831; border-radius: 13px; background: #19151d; }
 .hero-image, .hero-shade, .hero-grid { position: absolute; inset: 0; z-index: -1; }
-.hero-image { background: url('./multiverse.webp') center 58% / cover no-repeat; }
-.hero-shade { background: linear-gradient(90deg, #101114 0, #101114f5 10%, #101114bf 33%, #10111435 58%, #1011140b 84%), linear-gradient(0deg, #111115ae 0%, transparent 38%); }
+.hero-image { background: url('./worlds/world-23.webp') 65% center / cover no-repeat; }
+.hero-shade {
+  background: linear-gradient(90deg, #19151d 0%, #19151de8 19%, #19151dc2 36%, #19151d20 63%, transparent 80%),
+    linear-gradient(0deg, #19151db8, transparent 40%);
+}
 .hero-grid { opacity: .12; background-image: linear-gradient(#b99a6630 1px, transparent 1px), linear-gradient(90deg, #b99a6630 1px, transparent 1px); background-size: 38px 38px; mask-image: linear-gradient(90deg, #000, transparent 58%); }
 .hero-content { padding: 43px 48px 47px 58px; width: min(100%, 650px); }
 .hero-label { display: inline-flex; align-items: center; gap: 9px; border: 1px solid #6b5538; border-radius: 4px; padding: 7px 9px; background: #2d251a9c; }
@@ -239,7 +242,6 @@ dialog p:not(.eyebrow) { color: var(--muted); margin-top: 10px; font-size: 13px;
 .dialog-alert { padding: 6px 8px; border: 1px solid var(--line-warm); border-radius: 4px; }
 div.dialog-alert { margin-top: 10px; }
 dialog div.dialog-alert p { margin: 0; }
-.dialog-alert a { display: inline-flex; gap: 5px; align-items: center; color: var(--gold); margin-top: 5px; }
 .research-main { padding-top: 41px; }
 .research-main .info-tile { margin-top: 19px; max-width: 565px; }
 .stat-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 9px; margin-top: 19px; }
@@ -281,16 +283,20 @@ td code { color: var(--gold); }
   .frame { width: calc(100% - 44px); }
   .hero { min-height: 518px; }
   .hero-content { padding-left: 37px; }
-  .hero-shade { background: linear-gradient(90deg, #101114 0%, #101114ea 19%, #10111496 47%, #10111427 72%), linear-gradient(0deg, #111115a6 0%, transparent 40%); }
+  .hero-shade { background: linear-gradient(90deg, #19151df7, #19151de8 27%, #19151d9e 53%, #19151d1a 78%), linear-gradient(0deg, #19151db8, transparent 40%); }
 }
 @media (max-width: 710px) {
   .frame { width: calc(100% - 30px); }
   .head-inner { min-height: 64px; }
   .site-head nav, .head-location { display: none; }
   .home-main { padding-top: 16px; }
-  .hero { min-height: 480px; }
-  .hero-image { background-position: 66% 50%; }
-  .hero-content { padding: 30px 24px 44px; }
+  .hero { min-height: 500px; align-items: flex-end; }
+  .hero-image { background-position: 73% center; }
+  .hero-shade {
+    background: linear-gradient(90deg, #19151d85, transparent 78%),
+      linear-gradient(0deg, #19151dfa, #19151dc7 43%, #19151d7a 67%, transparent 100%);
+  }
+  .hero-content { padding: 30px 24px 52px; }
   .hero h1 { font-size: clamp(46px, 13.6vw, 87px); }
   .hero-tagline { max-width: 280px; }
   .hero-desc { max-width: 310px; font-size: 14px; }

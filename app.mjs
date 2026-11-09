@@ -1,4 +1,4 @@
-import { consentVersion, name, words } from './copy.mjs?v=6';
+import { consentVersion, name, words } from './copy.mjs?v=7';
 import { icon, sigil } from './icons.mjs';
 import { appearance, styles, worldAsset } from './worlds.mjs';
 import './world-scenes.js';
@@ -239,7 +239,7 @@ function dialog() {
   if (modal === 'consent') inner = `<p class="eyebrow">${t.consentTag}</p><h2 id="dialog-title">${t.consentTitle}</h2><p>${t.consentBody}</p><p>${t.consentVoluntary}</p>
     <form id="consent-form" aria-busy="${busy}"><label class="check-label"><input type="checkbox" name="consent" ${checked ? 'checked' : ''} required><span>${t.consentCheck}</span></label><div class="dialog-actions"><button type="button" class="button secondary" data-ui="close">${t.cancel}</button>
     ${entryError === 'consentChanged' ? `<button class="button primary" type="button" data-ui="reload">${t.reload}</button>` : `<button class="button primary" type="submit" ${checked && !busy ? '' : 'disabled'}>${busy ? t.entryOpening : entryError ? t.entryRetry : t.consentAccept}${icon('arrow')}</button>`}</div></form>
-    ${entryError ? `<div class="dialog-alert" role="status"><p>${t[entryError]}</p>${entryError === 'entryFailed' && backend && !playToken ? `<a href="${escape(backend)}/">${t.entryAlternate}${icon('diagonal', 13)}</a>` : ''}</div>` : ''}`;
+    ${entryError ? `<div class="dialog-alert" role="status"><p>${t[entryError]}</p></div>` : ''}`;
   if (modal === 'menu') inner = `<p class="eyebrow">${name}</p><h2 id="dialog-title">${t.menu}</h2><div class="menu-options"><a class="button secondary" href="${pageUrl('/')}" data-page="/">${t.pause}${icon('arrow')}</a><button class="button plain danger-text" type="button" data-ui="ask-withdraw">${t.withdraw}</button></div>`;
   if (modal === 'withdraw') inner = `<p class="eyebrow">${t.data}</p><h2 id="dialog-title">${t.withdrawTitle}</h2><p>${t.withdrawBody}</p><div class="dialog-actions"><button class="button secondary" type="button" data-ui="close">${t.cancel}</button><button class="button danger" type="button" data-ui="withdraw">${t.withdraw}</button></div>`;
   return `<dialog id="modal" aria-labelledby="dialog-title"><button class="icon-button dialog-close" type="button" data-ui="close" aria-label="${t.close}">${icon('cross')}</button>${inner}${alert && modal !== 'consent' ? `<p class="dialog-alert" role="status">${t[alert] ?? t.error}</p>` : ''}</dialog>`;
