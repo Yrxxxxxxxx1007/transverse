@@ -1,4 +1,4 @@
-import { name, words } from './copy.mjs?v=5';
+import { consentVersion, name, words } from './copy.mjs?v=6';
 import { icon, sigil } from './icons.mjs';
 import { appearance, styles, worldAsset } from './worlds.mjs';
 import './world-scenes.js';
@@ -14,20 +14,25 @@ const basePath = new URL('./', import.meta.url).pathname;
 const route = () => backend ? location.hash === '#play' ? '/play' : '/' : location.pathname;
 const pageUrl = destination => backend ? destination === '/research' ? `${backend}/research` : `${basePath}${destination === '/play' ? '#play' : ''}` : destination;
 const playTokenKey = `agii:session:${basePath}`;
+const startKeyStorage = `agii:pending-start:${basePath}`;
 let playToken = backend ? fromStorage(playTokenKey) : null;
+let startKey = fromStorage(startKeyStorage);
+let sessionEpoch = 0;
 let lang = fromStorage('agii:language') === 'zh' ? 'zh' : 'en';
 let t = words[lang];
 let page = route();
 let session = null;
-let consent = '';
 let busy = false;
-let loading = true;
+let loading = !backend || !!playToken;
 let alert = null;
 let modal = null;
 let checked = false;
+let entryError = null;
 let logTab = 'log';
 let research = null;
 let researchError = null;
+let listingRuns = false;
+let runDetail = null;
 let exporting = false;
 const universeNumber = id => String(id + 1).padStart(2, '0');
 
@@ -118,7 +123,11 @@ function portraitArt(look) {
 }
 
 function combat(g, look) {
-  const lastMove = g.log.findLast(row => row.changes || row.kind === 'noEffect');
+  let lastMove;
+  for (let i = g.log.length - 1; i >= 0; i--) {
+    const row = g.log[i];
+    if (row.changes || row.kind === 'noEffect') { lastMove = row; break; }
+  }
   return `<section class="combat-block"><div class="arena">
       <div class="arena-visual" aria-hidden="true">${sceneArt(look)}</div><div class="arena-shade"></div>
       <div class="arena-top"><span class="eyebrow"><span class="tag-dot"></span>${g.camp ? t.camp : `${t.pathNames.fight} ${String(g.stage).padStart(2, '0')}`}</span>${g.field === 'II' && g.camp && g.turn === 1 ? `<span class="arrival">${icon('orbit', 14)}${t.arrived}</span>` : ''}<span class="arena-turn">${t.turn} <strong>${String(g.turn).padStart(2, '0')}</strong></span></div>
@@ -181,8 +190,37 @@ function playPage() {
   return `<div class="world-shell" data-world="${theme.id}" data-family="${theme.family}" data-layout="${theme.layout}" data-type="${theme.type}"><main id="main" class="frame game-main">${g.phase === 'complete' ? completion(g) : `${expeditionBar(g, theme)}${pathBar(g)}<div class="game-grid">${g.phase === 'combat' ? combat(g, look) : choices(g, look)}${notebook(g)}</div>`}</main></div>`;
 }
 
-function dateText(value) {
-  return new Intl.DateTimeFormat(lang === 'zh' ? 'zh-CN' : 'en', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value));
+function dateText(value, precise = false) {
+  return new Intl.DateTimeFormat(lang === 'zh' ? 'zh-CN' : 'en', { dateStyle: 'medium', timeStyle: precise ? 'medium' : 'short' }).format(new Date(value));
+}
+
+function researchEvent(event) {
+  const { input, outcome, before, observedBefore, log } = event.payload;
+  const label = t.researchOps[event.action] ?? event.action;
+  const place = [`${t.expedition} ${before.life}`, before.role === 'camp' ? t.camp : `${t.stop} ${before.stage}`];
+  if (before.turn != null) place.push(`${t.turn} ${before.turn}`);
+  let choice = '';
+  if (event.action === 'play') choice = observedBefore?.hand?.[input.index]?.name ?? '';
+  if (event.action === 'route') choice = t.routeOption(input.index + 1);
+  if (event.action === 'rest') choice = input.index === 0 ? t.restore : t.repair;
+  if (event.action === 'reward') choice = observedBefore?.rewards?.[input.index] ?? t.noReward;
+  const note = outcome?.note?.text;
+  return `<details class="event-row"><summary><code>#${event.seq}</code><strong>${escape(label)}${choice ? ` · ${escape(choice)}` : ''}</strong><span>${escape(place.join(' / '))}</span><time datetime="${escape(event.at)}">${dateText(event.at, true)}</time></summary>
+    <div class="event-content"><p class="event-meta">${event.lang === 'zh' ? '中文' : 'EN'}${before.mechanic ? ` · ${t.encounterRule} <code>${escape(before.mechanic)}</code>` : ''}</p>
+    ${note ? `<h4>${t.noteRecorded}</h4><p class="event-note">${escape(note)}</p>` : ''}
+    ${log?.length ? `<h4>${t.observedChanges}</h4><ol class="log-list">${log.map(logLine).join('')}</ol>` : ''}
+    <details class="event-raw"><summary>${t.rawData}</summary><pre>${escape(JSON.stringify(event.payload, null, 2))}</pre></details></div></details>`;
+}
+
+function detailPanel() {
+  if (!runDetail) return '';
+  const { id, session: selected, events, next, loading, error } = runDetail;
+  return `<section id="run-detail" class="research-table run-detail" tabindex="-1"><div class="run-detail-head"><div><h2>${t.runDetails}</h2><code>${escape(id)}</code></div><div><button class="button plain" type="button" data-ui="refresh-run" ${loading ? 'disabled' : ''}>${t.refresh}</button><button class="button secondary" type="button" data-ui="close-run">${t.close}</button></div></div>
+    ${error ? `<p role="status">${t[error]}</p>` : ''}
+    ${selected ? `<p class="event-meta">${t.startedAt} ${dateText(selected.created_at)} · ${t.moves} ${selected.actions} · ${selected.completed_at ? t.finished : t.active}</p>
+      ${events.length ? `<div class="event-list">${events.map(researchEvent).join('')}</div>` : `<p>${t.noActions}</p>`}
+      ${next !== null ? `<button class="button secondary more-records" type="button" data-ui="more-actions" ${loading ? 'disabled' : ''}>${t.moreActions}</button>` : ''}` : ''}
+    ${loading ? `<p role="status">${t.loading}</p>` : ''}</section>`;
 }
 
 function researchPage() {
@@ -191,17 +229,20 @@ function researchPage() {
     ${researchError === 'sign_in' ? `<div class="info-tile"><p>${t.signInText}</p><a class="button primary" href="/signin-with-chatgpt?return_to=%2Fresearch" target="_top">${t.signIn}${icon('diagonal')}</a></div>` : researchError === 'owner_only' ? `<div class="info-tile">${t.ownerOnly}</div>` : ''}
     ${stats ? `<div class="stat-grid">${[[t.totalSessions, stats.started], [t.totalComplete, stats.completed], [t.totalMoves, stats.actions], [t.languageSplit, `中文 ${stats.zh} / EN ${stats.en}`]].map(([label, value]) => `<div class="stat-tile"><span>${label}</span><strong>${value}</strong></div>`).join('')}</div>
       <div class="research-actions"><button class="button primary" type="button" data-export="sessions">${icon('download', 17)}${t.csv}</button><button class="button secondary" type="button" data-export="events">${icon('download', 17)}${t.jsonl}</button><button class="button plain" type="button" data-ui="refresh">${t.refresh}</button></div>
-      <section class="research-table"><h2>${t.recent}</h2>${research.recent.length ? `<div class="table-scroll"><table><thead><tr>${[t.session, t.status, t.expedition, t.moves, t.language, t.updated].map(label => `<th scope="col">${label}</th>`).join('')}</tr></thead><tbody>${research.recent.map(row => `<tr><td><code title="${escape(row.id)}">${escape(row.id.slice(0, 8))}</code></td><td>${row.completed_at ? t.finished : t.active}</td><td>${row.life} / 3</td><td>${row.actions}</td><td>${row.start_lang === 'zh' ? '中文' : 'EN'}</td><td>${dateText(row.updated_at)}</td></tr>`).join('')}</tbody></table></div>` : `<p>${t.noRecords}</p>`}</section>` : !researchError ? `<p class="loading" role="status">${t.loading}</p>` : ''}</main>`;
+      <section class="research-table"><h2>${t.recent}</h2>${research.recent.length ? `<div class="table-scroll"><table><thead><tr>${[t.session, t.status, t.expedition, t.moves, t.language, t.updated, t.viewDetails].map(label => `<th scope="col">${label}</th>`).join('')}</tr></thead><tbody>${research.recent.map(row => `<tr><td><code title="${escape(row.id)}">${escape(row.id.slice(0, 8))}</code></td><td>${row.completed_at ? t.finished : t.active}</td><td>${row.life} / 3</td><td>${row.actions}</td><td>${row.start_lang === 'zh' ? '中文' : 'EN'}</td><td>${dateText(row.updated_at)}</td><td><button type="button" class="run-link" data-run="${escape(row.id)}" aria-expanded="${runDetail?.id === row.id}">${t.viewDetails}${icon('chevron', 14)}</button></td></tr>`).join('')}</tbody></table></div>` : `<p>${t.noRecords}</p>`}
+        ${research.next != null ? `<button class="button secondary more-records" type="button" data-ui="earlier-runs" ${listingRuns ? 'disabled' : ''}>${t.olderRuns}</button>` : ''}</section>${detailPanel()}` : !researchError ? `<p class="loading" role="status">${t.loading}</p>` : ''}</main>`;
 }
 
 function dialog() {
   if (!modal) return '';
   let inner;
   if (modal === 'consent') inner = `<p class="eyebrow">${t.consentTag}</p><h2 id="dialog-title">${t.consentTitle}</h2><p>${t.consentBody}</p><p>${t.consentVoluntary}</p>
-    <form id="consent-form"><label class="check-label"><input type="checkbox" name="consent" ${checked ? 'checked' : ''} required><span>${t.consentCheck}</span></label><div class="dialog-actions"><button type="button" class="button secondary" data-ui="close">${t.cancel}</button><button class="button primary" type="submit" ${checked && consent ? '' : 'disabled'}>${t.consentAccept}${icon('arrow')}</button></div></form>`;
+    <form id="consent-form" aria-busy="${busy}"><label class="check-label"><input type="checkbox" name="consent" ${checked ? 'checked' : ''} required><span>${t.consentCheck}</span></label><div class="dialog-actions"><button type="button" class="button secondary" data-ui="close">${t.cancel}</button>
+    ${entryError === 'consentChanged' ? `<button class="button primary" type="button" data-ui="reload">${t.reload}</button>` : `<button class="button primary" type="submit" ${checked && !busy ? '' : 'disabled'}>${busy ? t.entryOpening : entryError ? t.entryRetry : t.consentAccept}${icon('arrow')}</button>`}</div></form>
+    ${entryError ? `<div class="dialog-alert" role="status"><p>${t[entryError]}</p>${entryError === 'entryFailed' && backend && !playToken ? `<a href="${escape(backend)}/">${t.entryAlternate}${icon('diagonal', 13)}</a>` : ''}</div>` : ''}`;
   if (modal === 'menu') inner = `<p class="eyebrow">${name}</p><h2 id="dialog-title">${t.menu}</h2><div class="menu-options"><a class="button secondary" href="${pageUrl('/')}" data-page="/">${t.pause}${icon('arrow')}</a><button class="button plain danger-text" type="button" data-ui="ask-withdraw">${t.withdraw}</button></div>`;
   if (modal === 'withdraw') inner = `<p class="eyebrow">${t.data}</p><h2 id="dialog-title">${t.withdrawTitle}</h2><p>${t.withdrawBody}</p><div class="dialog-actions"><button class="button secondary" type="button" data-ui="close">${t.cancel}</button><button class="button danger" type="button" data-ui="withdraw">${t.withdraw}</button></div>`;
-  return `<dialog id="modal" aria-labelledby="dialog-title"><button class="icon-button dialog-close" type="button" data-ui="close" aria-label="${t.close}">${icon('cross')}</button>${inner}${alert ? `<p class="dialog-alert" role="status">${t[alert] ?? t.error}</p>` : ''}</dialog>`;
+  return `<dialog id="modal" aria-labelledby="dialog-title"><button class="icon-button dialog-close" type="button" data-ui="close" aria-label="${t.close}">${icon('cross')}</button>${inner}${alert && modal !== 'consent' ? `<p class="dialog-alert" role="status">${t[alert] ?? t.error}</p>` : ''}</dialog>`;
 }
 
 function render() {
@@ -218,15 +259,16 @@ function render() {
   const shown = document.querySelector('#modal');
   if (shown) {
     shown.showModal();
-    shown.addEventListener('cancel', event => { event.preventDefault(); modal = null; alert = null; render(); });
+    shown.addEventListener('cancel', event => { event.preventDefault(); if (!busy) { modal = null; alert = null; render(); } });
   }
   updateBusy();
 }
 
 function updateBusy() {
   for (const control of app.querySelectorAll('[data-action], #note-form button, [data-ui="withdraw"], [data-export], #consent-form button[type="submit"]')) {
-    control.disabled = busy || exporting && control.hasAttribute('data-export') || control.closest('#consent-form') && (!checked || !consent);
+    control.disabled = busy || exporting && control.hasAttribute('data-export') || !!control.closest('#consent-form') && !checked;
   }
+  for (const control of app.querySelectorAll('#modal [data-ui="close"], #consent-form input')) control.disabled = busy;
   const marker = document.querySelector('#save-mark span:last-child');
   if (marker) {
     marker.parentElement.dataset.pending = String(busy || alert === 'error');
@@ -237,6 +279,10 @@ function updateBusy() {
 function go(destination, push = true) {
   if (busy) return;
   if (push && destination !== page) history.pushState(null, '', pageUrl(destination));
+  if (page === '/research' && destination !== page) {
+    research = null;
+    runDetail = null;
+  }
   page = destination;
   alert = null;
   modal = null;
@@ -244,6 +290,23 @@ function go(destination, push = true) {
   render();
   window.scrollTo({ top: 0, behavior: 'instant' });
   if (page === '/research') refreshResearch();
+}
+
+async function requestJson(url, options, timeout) {
+  const controller = typeof AbortController === 'function' ? new AbortController() : null;
+  let timer;
+  const deadline = new Promise((_, reject) => {
+    timer = setTimeout(() => {
+      reject(new Error('Request timed out'));
+      controller?.abort();
+    }, timeout);
+  });
+  try {
+    return await Promise.race([deadline, (async () => {
+      const response = await fetch(url, controller ? { ...options, signal: controller.signal } : options);
+      return { ...await response.json(), status: response.status };
+    })()]);
+  } finally { clearTimeout(timer); }
 }
 
 async function api(path, data) {
@@ -255,67 +318,143 @@ async function api(path, data) {
     credentials: backend ? 'omit' : 'same-origin', cache: 'no-store',
   };
   // Reads and version-checked actions can be retried without applying a move twice.
-  const retryable = data === undefined || path === '/api/action' && Number.isSafeInteger(data.version);
-  let response;
-  let body;
-  for (let attempt = 0; attempt < (retryable ? 2 : 1); attempt++) {
+  const attempts = data === undefined || path === '/api/action' && Number.isSafeInteger(data.version) ? 2 : 1;
+  for (let attempt = 1; attempt <= attempts; attempt++) {
     try {
-      response = await fetch(`${backend}${path}`, { ...options, signal: AbortSignal.timeout(retryable ? 12000 : 18000) });
-      if (!retryable || attempt || response.status < 500) {
-        body = await response.json();
-        break;
-      }
-      await response.body?.cancel();
+      const result = await requestJson(`${backend}${path}`, options, attempts === 2 ? 12000 : 18000);
+      if (attempt === attempts || result.status < 500) return result;
     } catch (error) {
-      if (!retryable || attempt) throw error;
+      if (attempt === attempts) throw error;
     }
     await new Promise(resolve => setTimeout(resolve, 350));
   }
-  if (backend && (typeof body.token === 'string' || (response.ok && body.session === null))) {
-    playToken = body.token ?? null;
-    putStorage(playTokenKey, playToken);
+}
+
+function savePlayToken(token) {
+  if (!backend) return;
+  playToken = token;
+  putStorage(playTokenKey, token);
+}
+
+function pendingStartKey() {
+  if (!/^[a-f0-9]{64}$/.test(startKey ?? '')) {
+    try {
+      startKey = Array.from(crypto.getRandomValues(new Uint8Array(32)), byte => byte.toString(16).padStart(2, '0')).join('');
+      putStorage(startKeyStorage, startKey);
+    } catch { return undefined; }
   }
-  return { status: response.status, ...body };
+  return startKey;
+}
+
+function clearStartKey() {
+  startKey = null;
+  putStorage(startKeyStorage, null);
 }
 
 async function sync() {
+  if (busy) return;
+  const epoch = ++sessionEpoch;
   try {
-    const data = await api('/api/session');
+    const data = backend && !playToken ? { status: 200, session: null } : await api('/api/session');
+    if (epoch !== sessionEpoch) return;
     if (data.status !== 200) throw new Error(data.error);
     session = data.session;
-    consent = data.consent;
+    if (!session) savePlayToken(null);
+    if (session && session.game.phase !== 'complete') clearStartKey();
     alert = null;
-  } catch { alert = 'error'; }
-  finally { loading = false; render(); }
+  } catch { if (epoch === sessionEpoch) alert = 'error'; }
+  finally {
+    if (epoch === sessionEpoch) { loading = false; if (modal !== 'consent') render(); }
+  }
 }
 
 async function refreshResearch() {
   researchError = null;
   try {
     const data = await api('/api/research/overview');
-    if (data.status === 403) { research = null; researchError = data.error; }
+    if (page !== '/research') return;
+    if (data.status === 403) { research = null; runDetail = null; researchError = data.error; }
     else if (data.status === 200) { research = data; alert = null; }
     else throw new Error(data.error);
   } catch { alert = 'error'; researchError = 'error'; }
   if (page === '/research') render();
 }
 
-async function start() {
-  if (busy || !checked || !consent) return;
-  busy = true;
-  updateBusy();
+async function earlierRuns() {
+  if (listingRuns || research?.next == null) return;
+  const current = research;
+  listingRuns = true;
+  alert = null;
+  render();
   try {
-    const data = await api('/api/session', { consent, lang });
-    if (!data.session) throw new Error(data.error);
-    session = data.session;
+    const data = await api(`/api/research/sessions?before=${current.next}`);
+    if (research !== current) return;
+    if (data.status !== 200) throw new Error(data.error);
+    current.recent.push(...data.rows);
+    current.next = data.next;
+  } catch { if (research === current) alert = 'error'; }
+  finally { listingRuns = false; if (page === '/research') render(); }
+}
+
+async function loadRun(id, append = false) {
+  const detail = append ? runDetail : { id, session: null, events: [], next: null, loading: false, error: null };
+  if (!detail || detail.loading || (append && detail.next === null)) return;
+  runDetail = detail;
+  detail.loading = true;
+  detail.error = null;
+  render();
+  if (!append) document.querySelector('#run-detail')?.scrollIntoView({ block: 'start' });
+  try {
+    const data = await api(`/api/research/session?id=${encodeURIComponent(id)}&after=${append ? detail.next : 0}`);
+    if (runDetail !== detail) return;
+    if (data.status === 403) {
+      research = null;
+      runDetail = null;
+      researchError = data.error;
+    } else if (data.status === 404) {
+      detail.session = null;
+      detail.events = [];
+      detail.error = 'runMissing';
+    } else if (data.status === 200) {
+      detail.session = data.session;
+      detail.events.push(...data.events);
+      detail.next = data.next;
+    } else throw new Error(data.error);
+  } catch { if (runDetail === detail) detail.error = 'error'; }
+  finally { detail.loading = false; if (page === '/research') render(); }
+}
+
+async function start() {
+  if (busy || !checked || modal !== 'consent' || entryError === 'consentChanged') return;
+  ++sessionEpoch;
+  loading = false;
+  busy = true;
+  alert = null;
+  entryError = null;
+  render();
+  try {
+    const data = await api('/api/session', { consent: consentVersion, lang, startKey: pendingStartKey() });
+    if (data.error === 'consent_required') entryError = 'consentChanged';
+    else if ((data.status !== 200 && data.status !== 201) || !data.session) entryError = 'entryFailed';
+    else {
+      if (typeof data.token === 'string') savePlayToken(data.token);
+      clearStartKey();
+      session = data.session;
+    }
+  } catch { entryError = 'entryFailed'; }
+  finally {
     busy = false;
-    go('/play');
-  } catch { alert = 'error'; }
-  finally { busy = false; render(); }
+    if (!entryError) go('/play');
+    else {
+      render();
+      document.querySelector('#consent-form .primary')?.focus();
+    }
+  }
 }
 
 async function move(kind, fields = {}) {
   if (busy || !session || modal) return;
+  ++sessionEpoch;
   busy = true;
   alert = null;
   const game = session.game;
@@ -327,11 +466,12 @@ async function move(kind, fields = {}) {
       session = data.session;
       if (data.status === 409) alert = 'outOfSync';
       else if (draft) putStorage(draft, null);
-      const last = session.game.log.at(-1);
+      const log = session.game.log;
+      const last = log[log.length - 1];
       if (last) announcer.textContent = t.logWords[last.kind]?.(last) ?? '';
       if (game.life !== session.game.life) logTab = session.game.carried.length ? 'notes' : 'log';
     } else if (data.status === 400) alert = 'invalid';
-    else if (data.status === 404) { session = null; goAfterMove('/'); }
+    else if (data.status === 404) { savePlayToken(null); session = null; goAfterMove('/'); }
     else throw new Error(data.error);
   } catch { alert = 'error'; }
   finally { busy = false; render(); }
@@ -344,6 +484,7 @@ function goAfterMove(destination) {
 
 async function withdraw() {
   if (busy) return;
+  ++sessionEpoch;
   busy = true;
   updateBusy();
   try {
@@ -353,6 +494,8 @@ async function withdraw() {
       const prefix = `agii:draft:${session.id}:`;
       for (const key of Object.keys(localStorage).filter(key => key.startsWith(prefix))) putStorage(key, null);
     } catch { /* storage unavailable */ }
+    savePlayToken(null);
+    clearStartKey();
     session = null;
     goAfterMove('/');
     alert = 'withdrawDone';
@@ -360,7 +503,7 @@ async function withdraw() {
   finally { busy = false; render(); }
 }
 
-const csvCell = value => `"${String(value ?? '').replaceAll('"', '""')}"`;
+const csvCell = value => `"${String(value ?? '').replace(/"/g, '""')}"`;
 async function download(kind) {
   if (exporting) return;
   exporting = true;
@@ -397,12 +540,18 @@ app.addEventListener('click', event => {
   else if (d.action === 'skip') move('note', { text: '' });
   else if (d.action) move(d.action, d.index === undefined ? {} : { index: Number(d.index) });
   else if (d.export) download(d.export);
+  else if (d.run) loadRun(d.run);
+  else if (d.ui === 'earlier-runs') earlierRuns();
+  else if (d.ui === 'more-actions') loadRun(runDetail.id, true);
+  else if (d.ui === 'refresh-run') loadRun(runDetail.id);
+  else if (d.ui === 'close-run') { runDetail = null; render(); }
   else if (d.ui === 'refresh') page === '/research' ? refreshResearch() : sync();
+  else if (d.ui === 'reload') location.reload();
   else if (d.ui === 'withdraw') withdraw();
   else if (d.ui === 'enter' && session) go('/play');
   else if (d.ui) {
     alert = null;
-    if (d.ui === 'new' || d.ui === 'enter') { modal = 'consent'; checked = false; if (!consent) sync(); }
+    if (d.ui === 'new' || d.ui === 'enter') { modal = 'consent'; checked = false; entryError = null; }
     else if (d.ui === 'menu') modal = 'menu';
     else if (d.ui === 'ask-withdraw') modal = 'withdraw';
     else if (d.ui === 'close') modal = null;
@@ -436,4 +585,4 @@ window.addEventListener('popstate', () => { if (route() !== page) go(route(), fa
 
 render();
 if (page === '/research') refreshResearch();
-else sync();
+else if (loading) sync();

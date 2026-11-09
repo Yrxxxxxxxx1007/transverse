@@ -1,4 +1,6 @@
 export const name = 'Transverse';
+// Submit the version of the notice shown here, even if the session check fails.
+export const consentVersion = 'pilot-consent-1';
 
 export const words = {
   zh: {
@@ -20,6 +22,8 @@ export const words = {
     consentTag: '进入前', consentTitle: '参加这次试玩', consentBody: '本次试玩研究人们如何通过操作发现规律。系统会按随机编号保存你的出牌、选择、观察状态、时间、结果和已提交的笔记，供组织者分析。',
     consentVoluntary: '参与和写笔记都由你决定。请勿在笔记中填写姓名、联系方式或其他可识别身份的信息。你可以退出，或从试玩菜单删除当前记录。',
     consentCheck: '我了解记录内容，并同意参加这次试玩。', consentAccept: '同意并进入训练营', cancel: '取消', close: '关闭',
+    entryOpening: '正在进入训练营…', entryRetry: '重试进入', entryFailed: '暂时无法连接试玩服务器。请点「重试进入」。', entryAlternate: '打开备用入口',
+    consentChanged: '参与说明已更新。请重新载入页面后阅读新版说明。', reload: '重新载入',
     universe: '宇宙', arrived: '已抵达新宇宙', expedition: '远征', path: '路线进度', pathNames: { fight: '遭遇', rest: '休整', gate: '关口' }, turn: '回合',
     camp: '训练营', campHint: '这里可以安全试牌。观察符号变化，准备好后离开训练营。', turnsLeft: n => `剩余 ${n} 回合`,
     subject: '对手', you: '你', hand: '当前手牌', emptyHand: '手牌已空，结束回合后补牌。', cost: '代价',
@@ -47,7 +51,11 @@ export const words = {
     outOfSync: '已同步最新进度。请查看当前界面再操作。', invalid: '这个操作暂时无法执行。',
     researchTag: '组织者 / 数据', researchTitle: '试玩数据', researchBody: '浏览最新试玩，或导出逐步记录用于分析。',
     totalSessions: '开始试玩', totalComplete: '完成三轮', totalMoves: '记录动作', languageSplit: '开始时的语言',
-    recent: '最近 30 次试玩', session: '编号', status: '状态', updated: '最近更新', active: '进行中', noRecords: '还没有试玩记录。',
+    recent: '试玩会话', session: '编号', status: '状态', updated: '最近更新', active: '进行中', noRecords: '还没有试玩记录。',
+    olderRuns: '加载更早的试玩', viewDetails: '查看明细', runDetails: '单局明细', startedAt: '开始时间',
+    noActions: '本局还没有提交操作。', moreActions: '加载后续操作', runMissing: '这局记录已不可用。', stop: '节点',
+    rawData: '查看原始记录', noteRecorded: '提交的笔记', observedChanges: '当时的观测记录', encounterRule: '对手机制',
+    researchOps: { play: '出牌', end: '结束回合', note: '提交笔记', route: '选择入口', rest: '休整', reward: '选择奖励', reset: '重置营地', leave: '离开营地' },
     csv: '导出会话 CSV', jsonl: '导出动作 JSONL', exporting: '正在准备下载…', refresh: '刷新',
     signIn: '用 ChatGPT 登录', signInText: '请用网站所有者的 ChatGPT 账户查看试玩数据。', ownerOnly: '研究后台仅向网站所有者开放。',
   },
@@ -70,6 +78,8 @@ export const words = {
     consentTag: 'Before you enter', consentTitle: 'Take part in the pilot', consentBody: 'This pilot studies how people discover rules through play. The organizer can analyze your cards played, choices, visible states, timing, results, and submitted notes under a random ID.',
     consentVoluntary: 'Taking part and writing notes are optional. Keep names, contact details, and other identifying information out of your notes. You can leave or delete the current run from the game menu.',
     consentCheck: 'I understand what is recorded and agree to take part.', consentAccept: 'Agree and enter camp', cancel: 'Cancel', close: 'Close',
+    entryOpening: 'Opening camp…', entryRetry: 'Retry entering', entryFailed: 'Could not reach the game server. Select “Retry entering” to try again.', entryAlternate: 'Open alternate link',
+    consentChanged: 'The pilot notice has changed. Reload to read the latest version.', reload: 'Reload page',
     universe: 'Universe', arrived: 'New universe reached', expedition: 'Expedition', path: 'Route progress', pathNames: { fight: 'Encounter', rest: 'Rest', gate: 'Gate' }, turn: 'Turn',
     camp: 'Training camp', campHint: 'Try cards safely here. Watch the symbols change and leave camp when you are ready.', turnsLeft: n => `${n} ${n === 1 ? 'turn' : 'turns'} left`,
     subject: 'Opponent', you: 'You', hand: 'Your hand', emptyHand: 'Your hand is empty. End the turn to draw.', cost: 'Cost',
@@ -97,7 +107,11 @@ export const words = {
     outOfSync: 'Your latest progress is in view. Check the screen before your next move.', invalid: 'This action is unavailable right now.',
     researchTag: 'Organizer / data', researchTitle: 'Pilot records', researchBody: 'Review recent runs or export step-by-step records for analysis.',
     totalSessions: 'Runs started', totalComplete: 'Three expeditions finished', totalMoves: 'Actions recorded', languageSplit: 'Starting language',
-    recent: '30 most recent runs', session: 'Run ID', status: 'Status', updated: 'Last update', active: 'In progress', noRecords: 'No runs yet.',
+    recent: 'Pilot sessions', session: 'Run ID', status: 'Status', updated: 'Last update', active: 'In progress', noRecords: 'No runs yet.',
+    olderRuns: 'Load earlier runs', viewDetails: 'View details', runDetails: 'Run details', startedAt: 'Started at',
+    noActions: 'This run has no submitted actions yet.', moreActions: 'Load next actions', runMissing: 'This run is no longer available.', stop: 'Stop',
+    rawData: 'View raw event', noteRecorded: 'Submitted note', observedChanges: 'Observation log at this step', encounterRule: 'Encounter rule',
+    researchOps: { play: 'Played card', end: 'Ended turn', note: 'Submitted note', route: 'Chose entrance', rest: 'Rested', reward: 'Chose reward', reset: 'Reset camp', leave: 'Left camp' },
     csv: 'Export sessions CSV', jsonl: 'Export actions JSONL', exporting: 'Preparing download…', refresh: 'Refresh',
     signIn: 'Sign in with ChatGPT', signInText: 'Use the site owner’s ChatGPT account to view pilot data.', ownerOnly: 'The research console is restricted to the site owner.',
   },
