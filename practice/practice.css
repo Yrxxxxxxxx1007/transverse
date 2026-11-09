@@ -58,10 +58,14 @@
 .practice-guide, .practice-local { color: var(--muted); font-size: 13px; }
 .practice-guide { margin: 12px 0; }
 .practice-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
-.practice-actions .primary { border-color: var(--accent); background: var(--accent); }
+.practice-wrap .button.primary { border-color: var(--accent); background: var(--accent); }
 .practice-quiet { color: var(--muted); background: var(--panel-raised); border-color: var(--line); }
 .practice-result { color: var(--accent); margin-top: 9px; }
 .practice-result:empty { display: none; }
+.practice-record { display: grid; justify-items: start; gap: 8px; margin-top: 16px; padding-top: 13px; border-top: 1px solid var(--line); }
+.practice-record h3 { margin: 0; font-size: 14px; color: var(--accent); }
+.practice-record p, .practice-record label { color: var(--muted); font-size: 13px; }
+.practice-record textarea { width: 100%; padding: 9px 10px; resize: vertical; color: var(--ink); background: var(--panel-raised); border: 1px solid var(--line); border-radius: 7px; }
 .practice-clue { margin: 12px 0; padding: 10px; border-left: 2px solid var(--accent); background: #202026; font-size: 13px; }
 .practice-notes ol { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; font-size: 13px; color: var(--muted); }
 .practice-notes li { padding-bottom: 5px; border-bottom: 1px solid var(--line); }
