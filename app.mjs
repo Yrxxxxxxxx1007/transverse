@@ -1,4 +1,4 @@
-import { words } from './copy.mjs';
+import { lab, name, words } from './copy.mjs';
 import { icon, sigil } from './icons.mjs';
 import { appearance, styles, worldAsset } from './worlds.mjs';
 import './world-scenes.js';
@@ -29,20 +29,46 @@ let logTab = 'log';
 let research = null;
 let researchError = null;
 let exporting = false;
+let atlasId = 14;
+const atlasNumber = id => String(id + 1).padStart(2, '0');
 
-const brand = () => `<a class="brand" href="${pageUrl('/')}" data-page="/" aria-label="AGII ${t.lab}"><img src="${basePath}mark.svg" width="42" height="42" alt=""><span class="brand-text"><strong>AGII</strong><small>${t.lab}</small></span></a>`;
+const brand = () => `<a class="brand" href="${pageUrl('/')}" data-page="/" aria-label="${name} · ${lab}"><img src="${basePath}mark.svg" width="42" height="42" alt=""><span class="brand-text"><strong>${name}</strong><small>${lab}</small></span></a>`;
 
 function header() {
   const playMenu = page === '/play' && session;
   return `<header class="site-head"><div class="frame head-inner">${brand()}
-    ${page === '/' ? `<nav aria-label="${t.home}"><a href="#expeditions">${t.how}</a><a href="#data">${t.data}</a></nav>` : `<span class="head-location">${page === '/research' ? t.research : t.title}</span>`}
+    ${page === '/' ? `<nav aria-label="${t.home}"><a href="#atlas">${t.worldTitle}</a><a href="#expeditions">${t.how}</a><a href="#data">${t.data}</a></nav>` : `<span class="head-location">${page === '/research' ? t.research : lab}</span>`}
     <div class="head-tools">${playMenu ? `<button type="button" class="icon-button" data-ui="menu" aria-label="${t.menu}" title="${t.menu}">${icon('menu', 20)}</button>` : ''}
       <div class="language" role="group" aria-label="${t.language}"><button type="button" data-lang="en" lang="en" aria-pressed="${lang === 'en'}">EN</button><button type="button" data-lang="zh" lang="zh-CN" aria-pressed="${lang === 'zh'}">中文</button></div>
     </div></div></header>`;
 }
 
 function footer() {
-  return `<footer class="site-foot frame"><span><span class="foot-dot"></span>${t.footer}</span><a href="${pageUrl('/research')}" ${backend ? '' : 'data-page="/research"'}>${t.research}${icon('diagonal', 14)}</a></footer>`;
+  return `<footer class="site-foot frame"><span><span class="foot-dot"></span>${name} · ${lab}</span><a href="${pageUrl('/research')}" ${backend ? '' : 'data-page="/research"'}>${t.research}${icon('diagonal', 14)}</a></footer>`;
+}
+
+function atlasStage() {
+  const theme = styles[atlasId];
+  const look = { theme, actor: atlasId, form: atlasId % 4, sceneSeed: 6437, figureSeed: 8541 };
+  return `<figure class="atlas-preview world-shell" data-world="${theme.id}">
+    <div class="atlas-scene" aria-hidden="true">${sceneArt(look)}</div><div class="atlas-portrait" aria-hidden="true">${portraitArt(look)}</div>
+    <span class="atlas-stamp">${icon('orbit', 17)} ${t.atlasPreview}</span><span class="atlas-coordinate" aria-hidden="true">U–${atlasNumber(theme.id)}</span>
+    <figcaption><span>${t.atlasNumber(atlasNumber(theme.id))}</span><strong>${theme[lang]}</strong></figcaption></figure>`;
+}
+
+function atlas() {
+  return `<section class="home-section world-archive" id="atlas"><div class="section-head"><p class="eyebrow">${t.worldKicker}</p><h2>${t.worldTitle}</h2><p>${t.worldIntro}</p></div>
+    <div class="atlas-console"><div id="atlas-viewport">${atlasStage()}</div><div class="atlas-index">
+      <div class="atlas-index-title"><h3>${t.atlasIndex}</h3>${icon('orbit', 24)}</div>
+      <div class="atlas-grid" role="group" aria-label="${t.atlasIndex}">${styles.map(theme => `<button type="button" class="atlas-node" data-atlas="${theme.id}" aria-controls="atlas-viewport" aria-pressed="${theme.id === atlasId}" aria-label="${t.atlasNumber(atlasNumber(theme.id))}, ${theme[lang]}" title="${theme[lang]}">${atlasNumber(theme.id)}</button>`).join('')}</div>
+    </div></div></section>`;
+}
+
+function selectAtlas(id) {
+  atlasId = id;
+  document.querySelector('#atlas-viewport').innerHTML = atlasStage();
+  for (const button of app.querySelectorAll('[data-atlas]')) button.setAttribute('aria-pressed', String(Number(button.dataset.atlas) === id));
+  announcer.textContent = `${t.atlasNumber(atlasNumber(id))}, ${styles[id][lang]}`;
 }
 
 function home() {
@@ -50,15 +76,15 @@ function home() {
     <section class="hero" aria-labelledby="hero-title"><div class="hero-image"></div><div class="hero-shade"></div><div class="hero-grid"></div>
       <span class="corner top-left"></span><span class="corner top-right"></span><span class="corner bottom-left"></span><span class="corner bottom-right"></span>
       <div class="hero-content"><div class="eyebrow hero-label"><span class="tag-dot"></span>${t.pilot}</div>
-        <p class="hero-protocol">AGII / ${t.title}</p><h1 id="hero-title"><span>${t.heroTop}</span><em>${t.heroBottom}</em></h1>
+        <p class="hero-protocol">${lab}</p><h1 id="hero-title">${name}</h1><p class="hero-tagline">${t.heroTagline}</p>
         <p class="hero-desc">${t.intro}</p><div class="hero-actions"><button type="button" class="button primary" data-ui="enter">${session ? session.game.phase === 'complete' ? t.report : t.resume : t.start}${icon('arrow', 20)}</button><a class="button secondary" href="#expeditions">${t.howLink}</a></div>
         <ul class="hero-facts"><li>${icon('layers', 16)}${t.roundsMeta}</li><li>${icon('orbit', 16)}${t.worldMeta}</li><li>${icon('monitor', 16)}${t.deviceMeta}</li></ul>
       </div><p class="hero-plate">${t.heroCaption}<span></span></p>
     </section>
+    ${atlas()}
     <section class="home-section" id="expeditions"><div class="section-head"><p class="eyebrow">${t.flowKicker}</p><h2>${t.flowTitle}</h2><p>${t.flowIntro}</p></div>
       <div class="phase-grid">${t.phases.map(([title, description], index) => `<article class="phase-tile"><div class="phase-top"><span class="phase-icon">${icon(['compass', 'note', 'orbit'][index], 25)}</span><span class="phase-number">0${index + 1}</span></div><h3>${title}</h3><p>${description}</p></article>`).join('')}</div>
     </section>
-    <section class="home-section world-archive"><div class="section-head"><p class="eyebrow">${t.worldKicker}</p><h2>${t.worldTitle}</h2><p>${t.worldIntro}</p></div><div class="archive-grid">${[14, 22, 8].map(id => `<figure class="archive-entry"><img src="${basePath}${worldAsset(id)}" alt="" loading="lazy" decoding="async"><figcaption><span>${String(id + 1).padStart(2, '0')}</span>${styles[id][lang]}</figcaption></figure>`).join('')}</div></section>
     <div class="home-info"><section class="info-tile" id="help"><p class="eyebrow">${t.helpKicker}</p><h2>${t.helpTitle}</h2><p>${t.helpText}</p></section><section class="info-tile" id="data"><p class="eyebrow">${t.dataKicker}</p><h2>${t.dataTitle}</h2><p>${t.dataText}</p></section></div>
   </main>`;
 }
@@ -71,7 +97,7 @@ function pathBar(g) {
 }
 
 function expeditionBar(g, theme) {
-  return `<div class="run-top"><div class="run-title"><div class="world-name"><span class="eyebrow">${t.field} ${g.field}</span><span>${theme[lang]}</span></div><h1>${t.expedition} <span>${String(g.life).padStart(2, '0')}</span><small> / 03</small></h1></div>
+  return `<div class="run-top"><div class="run-title"><div class="world-name"><span class="eyebrow">${icon('orbit', 14)} ${t.universe} ${g.field}</span><span>${theme[lang]}</span><span class="world-coordinate" aria-hidden="true">U–${atlasNumber(theme.id)}</span></div><h1>${t.expedition} <span>${String(g.life).padStart(2, '0')}</span><small> / 03</small></h1></div>
     <div class="run-top-right"><div class="life-dots" aria-label="${t.expedition} ${g.life} / 3">${[1,2,3].map(number => `<span class="${number === g.life ? 'current' : number < g.life ? 'passed' : ''}">${number < g.life ? icon('check', 13) : `0${number}`}</span>`).join('')}</div><div class="save-mark" id="save-mark"><span class="status-dot"></span><span>${busy ? t.saving : t.saved}</span></div></div></div>`;
 }
 
@@ -109,7 +135,7 @@ function combat(g, look) {
   const lastMove = g.log.findLast(row => row.changes || row.kind === 'noEffect');
   return `<section class="combat-block"><div class="arena">
       <div class="arena-visual" aria-hidden="true">${sceneArt(look)}</div><div class="arena-shade"></div>
-      <div class="arena-top"><span class="eyebrow"><span class="tag-dot"></span>${g.camp ? t.camp : `${t.pathNames.fight} ${String(g.stage).padStart(2, '0')}`}</span><span class="arena-turn">${t.turn} <strong>${String(g.turn).padStart(2, '0')}</strong></span></div>
+      <div class="arena-top"><span class="eyebrow"><span class="tag-dot"></span>${g.camp ? t.camp : `${t.pathNames.fight} ${String(g.stage).padStart(2, '0')}`}</span>${g.field === 'II' && g.camp && g.turn === 1 ? `<span class="arrival">${icon('orbit', 14)}${t.arrived}</span>` : ''}<span class="arena-turn">${t.turn} <strong>${String(g.turn).padStart(2, '0')}</strong></span></div>
       <div class="arena-figure" aria-hidden="true">${portraitArt(look)}</div>
       <div class="arena-readouts"><div class="readout"><h2>${t.you}</h2>${slots(g.you)}</div><div class="readout"><h2>${t.subject}${g.name ? ` <span>${escape(g.name)}</span>` : ''}</h2>${slots(g.them)}</div></div>
     </div>
@@ -187,7 +213,7 @@ function dialog() {
   let inner;
   if (modal === 'consent') inner = `<p class="eyebrow">${t.consentTag}</p><h2 id="dialog-title">${t.consentTitle}</h2><p>${t.consentBody}</p><p>${t.consentVoluntary}</p>
     <form id="consent-form"><label class="check-label"><input type="checkbox" name="consent" ${checked ? 'checked' : ''} required><span>${t.consentCheck}</span></label><div class="dialog-actions"><button type="button" class="button secondary" data-ui="close">${t.cancel}</button><button class="button primary" type="submit" ${checked && consent ? '' : 'disabled'}>${t.consentAccept}${icon('arrow')}</button></div></form>`;
-  if (modal === 'menu') inner = `<p class="eyebrow">AGII</p><h2 id="dialog-title">${t.menu}</h2><div class="menu-options"><a class="button secondary" href="${pageUrl('/')}" data-page="/">${t.pause}${icon('arrow')}</a><button class="button plain danger-text" type="button" data-ui="ask-withdraw">${t.withdraw}</button></div>`;
+  if (modal === 'menu') inner = `<p class="eyebrow">${name}</p><h2 id="dialog-title">${t.menu}</h2><div class="menu-options"><a class="button secondary" href="${pageUrl('/')}" data-page="/">${t.pause}${icon('arrow')}</a><button class="button plain danger-text" type="button" data-ui="ask-withdraw">${t.withdraw}</button></div>`;
   if (modal === 'withdraw') inner = `<p class="eyebrow">${t.data}</p><h2 id="dialog-title">${t.withdrawTitle}</h2><p>${t.withdrawBody}</p><div class="dialog-actions"><button class="button secondary" type="button" data-ui="close">${t.cancel}</button><button class="button danger" type="button" data-ui="withdraw">${t.withdraw}</button></div>`;
   return `<dialog id="modal" aria-labelledby="dialog-title"><button class="icon-button dialog-close" type="button" data-ui="close" aria-label="${t.close}">${icon('cross')}</button>${inner}${alert ? `<p class="dialog-alert" role="status">${t[alert] ?? t.error}</p>` : ''}</dialog>`;
 }
@@ -195,7 +221,7 @@ function dialog() {
 function render() {
   t = words[lang];
   document.documentElement.lang = lang === 'zh' ? 'zh-CN' : 'en';
-  document.title = `AGII · ${page === '/research' ? t.research : t.title}`;
+  document.title = page === '/research' ? `${t.research} · ${name}` : `${name} · ${lab}`;
   const oldScroll = document.querySelector('#log-scroll');
   const scrollTop = oldScroll?.scrollTop ?? 0;
   const nearBottom = !oldScroll || oldScroll.scrollHeight - oldScroll.clientHeight - scrollTop < 35;
@@ -291,7 +317,7 @@ async function move(kind, fields = {}) {
   const draft = kind === 'note' ? draftKey(game) : null;
   updateBusy();
   try {
-    const data = await api('/api/action', { kind, ...fields, version: session.version, lang, ui: 'multiverse-2' });
+    const data = await api('/api/action', { kind, ...fields, version: session.version, lang, ui: 'transverse-3' });
     if (data.session) {
       session = data.session;
       if (data.status === 409) alert = 'outOfSync';
@@ -349,7 +375,7 @@ async function download(kind) {
     const url = URL.createObjectURL(new Blob(parts, { type: csv ? 'text/csv;charset=utf-8' : 'application/x-ndjson;charset=utf-8' }));
     const anchor = document.createElement('a');
     anchor.href = url;
-    anchor.download = csv ? 'agii-sessions.csv' : 'agii-actions.jsonl';
+    anchor.download = csv ? 'transverse-sessions.csv' : 'transverse-actions.jsonl';
     anchor.click();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   } catch { alert = 'error'; }
@@ -362,6 +388,7 @@ app.addEventListener('click', event => {
   const d = control.dataset;
   if (d.lang) { lang = d.lang; putStorage('agii:language', lang); render(); }
   else if (d.page && !event.ctrlKey && !event.metaKey && !event.shiftKey && !event.altKey) { event.preventDefault(); go(d.page); }
+  else if (d.atlas !== undefined) selectAtlas(Number(d.atlas));
   else if (d.tab) { logTab = d.tab; render(); }
   else if (d.action === 'skip') move('note', { text: '' });
   else if (d.action) move(d.action, d.index === undefined ? {} : { index: Number(d.index) });
@@ -401,7 +428,7 @@ document.addEventListener('keydown', event => {
     event.preventDefault(); move('end');
   }
 });
-window.addEventListener('popstate', () => go(route(), false));
+window.addEventListener('popstate', () => { if (route() !== page) go(route(), false); });
 
 render();
 if (page === '/research') refreshResearch();
