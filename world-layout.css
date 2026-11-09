@@ -43,6 +43,7 @@
 .world-coordinate { color: var(--world-muted); font: 10px var(--mono); }
 .arrival { display: inline-flex; align-items: center; gap: 5px; color: var(--world-key); font-size: 11px; }
 .world-shell .save-mark .status-dot { background: var(--world-saved); box-shadow: none; }
+.world-shell .save-mark[data-pending="true"] .status-dot { background: var(--world-key); }
 .world-shell .tag-dot { background: var(--world-accent2); box-shadow: 0 0 8px var(--world-accent2); }
 .world-shell .life-dots .current, .world-shell .route-track li.current svg { background: var(--trim); border-color: var(--world-accent); }
 .world-shell .life-dots .passed, .world-shell .route-track li, .world-shell .route-track li.passed svg { color: var(--world-muted); }

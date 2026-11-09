@@ -1,5 +1,4 @@
 export const name = 'Transverse';
-export const lab = 'ENCODE lab';
 
 export const words = {
   zh: {
@@ -25,7 +24,7 @@ export const words = {
     camp: '训练营', campHint: '这里可以安全试牌。观察符号变化，准备好后离开训练营。', turnsLeft: n => `剩余 ${n} 回合`,
     subject: '对手', you: '你', hand: '当前手牌', emptyHand: '手牌已空，结束回合后补牌。', cost: '代价',
     end: '结束回合', reset: '重置训练营', leave: '离开训练营',
-    saved: '已保存', saving: '正在保存', loading: '正在连接实验室…', menu: '试玩菜单', pause: '返回首页，保留进度',
+    saved: '已保存', saving: '正在保存', syncPending: '待确认保存', loading: '正在连接…', menu: '试玩菜单', pause: '返回首页，保留进度',
     withdraw: '退出并删除本次记录', withdrawTitle: '删除本次试玩？', withdrawBody: '这会删除当前进度和服务端保存的本次操作、选择与笔记。此操作无法撤销。',
     withdrawDone: '本次试玩记录已删除。', log: '观测记录', notes: '随身笔记', noNotes: '这轮没有带入的笔记。',
     routeTitle: '选择入口', routeText: '选一个入口继续前进。进入后可以观察对手与手牌。',
@@ -75,7 +74,7 @@ export const words = {
     camp: 'Training camp', campHint: 'Try cards safely here. Watch the symbols change and leave camp when you are ready.', turnsLeft: n => `${n} ${n === 1 ? 'turn' : 'turns'} left`,
     subject: 'Opponent', you: 'You', hand: 'Your hand', emptyHand: 'Your hand is empty. End the turn to draw.', cost: 'Cost',
     end: 'End turn', reset: 'Reset camp', leave: 'Leave camp',
-    saved: 'Saved', saving: 'Saving', loading: 'Connecting to the lab…', menu: 'Game menu', pause: 'Back to home, keep progress',
+    saved: 'Saved', saving: 'Saving', syncPending: 'Save unconfirmed', loading: 'Connecting…', menu: 'Game menu', pause: 'Back to home, keep progress',
     withdraw: 'Leave and delete this run', withdrawTitle: 'Delete this run?', withdrawBody: 'This removes your current progress and the actions, choices, and notes stored for this run. Deletion is permanent.',
     withdrawDone: 'This run has been deleted.', log: 'Observation log', notes: 'Carried notes', noNotes: 'No notes came into this expedition.',
     routeTitle: 'Choose an entry', routeText: 'Pick an entrance to continue. You will see the opponent and your hand after you enter.',

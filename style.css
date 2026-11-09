@@ -38,9 +38,7 @@ svg { flex-shrink: 0; vertical-align: middle; }
 .head-inner { display: flex; align-items: center; justify-content: space-between; gap: 24px; min-height: 75px; }
 .brand { display: inline-flex; align-items: center; gap: 12px; flex-shrink: 0; }
 .brand img { display: block; }
-.brand-text { display: grid; gap: 2px; }
 .brand strong { letter-spacing: .015em; line-height: 1.08; font-size: 20px; font-weight: 760; }
-.brand small { font: 600 10px/1.2 var(--mono); letter-spacing: .08em; color: var(--dim); }
 .site-head nav { display: flex; gap: 34px; color: var(--muted); font-size: 13px; }
 .site-head nav a:hover, .site-foot a:hover { color: var(--gold-bright); }
 .head-location { font-size: 13px; color: var(--muted); }
@@ -60,8 +58,7 @@ svg { flex-shrink: 0; vertical-align: middle; }
 .hero-content { padding: 43px 48px 47px 58px; width: min(100%, 650px); }
 .hero-label { display: inline-flex; align-items: center; gap: 9px; border: 1px solid #6b5538; border-radius: 4px; padding: 7px 9px; background: #2d251a9c; }
 .tag-dot, .status-dot, .foot-dot { flex: none; display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--gold); box-shadow: 0 0 10px #dcb87d70; }
-.hero-protocol { color: #dbd0bf; font: 500 13px/1.4 var(--mono); letter-spacing: .105em; margin-top: 23px; }
-.hero h1 { margin: 8px 0 11px; font: 560 clamp(62px, 9.1vw, 123px)/.92 Georgia, "Times New Roman", serif; letter-spacing: -.078em; }
+.hero h1 { margin: 24px 0 11px; font: 560 clamp(62px, 9.1vw, 123px)/.92 Georgia, "Times New Roman", serif; letter-spacing: -.078em; }
 .hero-tagline { max-width: 460px; margin-bottom: 12px; color: #f0d6ad; font: 550 clamp(21px, 2.6vw, 33px)/1.18 var(--display); text-wrap: balance; }
 .hero-tagline + .hero-desc { max-width: 375px; }
 .hero-desc { color: #d5ced0; font-size: 15px; line-height: 1.75; max-width: 400px; }
@@ -272,7 +269,6 @@ td code { color: var(--gold); }
   .hero-content { padding: 30px 24px 44px; }
   .hero h1 { font-size: clamp(46px, 13.6vw, 87px); }
   .hero-tagline { max-width: 280px; }
-  .hero-protocol { margin-top: 16px; }
   .hero-desc { max-width: 310px; font-size: 14px; }
   .hero-facts { margin-top: 20px; }
   .hero-plate { bottom: 14px; right: 18px; }

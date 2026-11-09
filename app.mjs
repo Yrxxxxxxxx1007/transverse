@@ -1,4 +1,4 @@
-import { lab, name, words } from './copy.mjs?v=4';
+import { name, words } from './copy.mjs?v=5';
 import { icon, sigil } from './icons.mjs';
 import { appearance, styles, worldAsset } from './worlds.mjs';
 import './world-scenes.js';
@@ -31,19 +31,19 @@ let researchError = null;
 let exporting = false;
 const universeNumber = id => String(id + 1).padStart(2, '0');
 
-const brand = () => `<a class="brand" href="${pageUrl('/')}" data-page="/" aria-label="${name} · ${lab}"><img src="${basePath}mark.svg" width="42" height="42" alt=""><span class="brand-text"><strong>${name}</strong><small>${lab}</small></span></a>`;
+const brand = () => `<a class="brand" href="${pageUrl('/')}" data-page="/" aria-label="${name}"><img src="${basePath}mark.svg" width="42" height="42" alt=""><strong>${name}</strong></a>`;
 
 function header() {
   const playMenu = page === '/play' && session;
   return `<header class="site-head"><div class="frame head-inner">${brand()}
-    ${page === '/' ? `<nav aria-label="${t.home}"><a href="#expeditions">${t.how}</a><a href="#data">${t.data}</a></nav>` : `<span class="head-location">${page === '/research' ? t.research : lab}</span>`}
+    ${page === '/' ? `<nav aria-label="${t.home}"><a href="#expeditions">${t.how}</a><a href="#data">${t.data}</a></nav>` : page === '/research' ? `<span class="head-location">${t.research}</span>` : ''}
     <div class="head-tools">${playMenu ? `<button type="button" class="icon-button" data-ui="menu" aria-label="${t.menu}" title="${t.menu}">${icon('menu', 20)}</button>` : ''}
       <div class="language" role="group" aria-label="${t.language}"><button type="button" data-lang="en" lang="en" aria-pressed="${lang === 'en'}">EN</button><button type="button" data-lang="zh" lang="zh-CN" aria-pressed="${lang === 'zh'}">中文</button></div>
     </div></div></header>`;
 }
 
 function footer() {
-  return `<footer class="site-foot frame"><span><span class="foot-dot"></span>${name} · ${lab}</span><a href="${pageUrl('/research')}" ${backend ? '' : 'data-page="/research"'}>${t.research}${icon('diagonal', 14)}</a></footer>`;
+  return `<footer class="site-foot frame"><span><span class="foot-dot"></span>${name}</span><a href="${pageUrl('/research')}" ${backend ? '' : 'data-page="/research"'}>${t.research}${icon('diagonal', 14)}</a></footer>`;
 }
 
 function expeditionSteps() {
@@ -63,7 +63,7 @@ function home() {
     <section class="hero" aria-labelledby="hero-title"><div class="hero-image"></div><div class="hero-shade"></div><div class="hero-grid"></div>
       <span class="corner top-left"></span><span class="corner top-right"></span><span class="corner bottom-left"></span><span class="corner bottom-right"></span>
       <div class="hero-content"><div class="eyebrow hero-label"><span class="tag-dot"></span>${t.pilot}</div>
-        <p class="hero-protocol">${lab}</p><h1 id="hero-title">${name}</h1><p class="hero-tagline">${t.heroTagline}</p>
+        <h1 id="hero-title">${name}</h1><p class="hero-tagline">${t.heroTagline}</p>
         <p class="hero-desc">${t.intro}</p><div class="hero-actions"><button type="button" class="button primary" data-ui="enter">${session ? session.game.phase === 'complete' ? t.report : t.resume : t.start}${icon('arrow', 20)}</button><a class="button secondary" href="#expeditions">${t.howLink}</a></div>
         <ul class="hero-facts"><li>${icon('layers', 16)}${t.roundsMeta}</li><li>${icon('orbit', 16)}${t.worldMeta}</li><li>${icon('monitor', 16)}${t.deviceMeta}</li></ul>
       </div><p class="hero-plate">${t.heroCaption}<span></span></p>
@@ -207,7 +207,7 @@ function dialog() {
 function render() {
   t = words[lang];
   document.documentElement.lang = lang === 'zh' ? 'zh-CN' : 'en';
-  document.title = page === '/research' ? `${t.research} · ${name}` : `${name} · ${lab}`;
+  document.title = page === '/research' ? `${t.research} · ${name}` : name;
   const oldScroll = document.querySelector('#log-scroll');
   const scrollTop = oldScroll?.scrollTop ?? 0;
   const nearBottom = !oldScroll || oldScroll.scrollHeight - oldScroll.clientHeight - scrollTop < 35;
@@ -228,7 +228,10 @@ function updateBusy() {
     control.disabled = busy || exporting && control.hasAttribute('data-export') || control.closest('#consent-form') && (!checked || !consent);
   }
   const marker = document.querySelector('#save-mark span:last-child');
-  if (marker) marker.textContent = busy ? t.saving : t.saved;
+  if (marker) {
+    marker.parentElement.dataset.pending = String(busy || alert === 'error');
+    marker.textContent = busy ? t.saving : alert === 'error' ? t.syncPending : t.saved;
+  }
 }
 
 function go(destination, push = true) {
@@ -247,11 +250,27 @@ async function api(path, data) {
   const headers = {};
   if (data !== undefined) headers['Content-Type'] = 'application/json';
   if (backend && playToken) headers.Authorization = `Bearer ${playToken}`;
-  const response = await fetch(`${backend}${path}`, {
+  const options = {
     ...(data === undefined ? {} : { method: 'POST', body: JSON.stringify(data) }), headers,
-    credentials: backend ? 'omit' : 'same-origin', cache: 'no-store', signal: AbortSignal.timeout(18000),
-  });
-  const body = await response.json();
+    credentials: backend ? 'omit' : 'same-origin', cache: 'no-store',
+  };
+  // Reads and version-checked actions can be retried without applying a move twice.
+  const retryable = data === undefined || path === '/api/action' && Number.isSafeInteger(data.version);
+  let response;
+  let body;
+  for (let attempt = 0; attempt < (retryable ? 2 : 1); attempt++) {
+    try {
+      response = await fetch(`${backend}${path}`, { ...options, signal: AbortSignal.timeout(retryable ? 12000 : 18000) });
+      if (!retryable || attempt || response.status < 500) {
+        body = await response.json();
+        break;
+      }
+      await response.body?.cancel();
+    } catch (error) {
+      if (!retryable || attempt) throw error;
+    }
+    await new Promise(resolve => setTimeout(resolve, 350));
+  }
   if (backend && (typeof body.token === 'string' || (response.ok && body.session === null))) {
     playToken = body.token ?? null;
     putStorage(playTokenKey, playToken);
