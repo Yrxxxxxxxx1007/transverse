@@ -1,7 +1,7 @@
 import { name, words } from './copy.mjs?v=10';
 import { icon } from './icons.mjs';
 import { renderCover } from './cover.mjs';
-import { boardPresentation, createBoard } from './board.mjs?v=11';
+import { boardPresentation, createBoard } from './board.mjs?v=12';
 import { installCroppedArt } from './archive-ui/cropped-art.mjs';
 import { applyLocalMove, createLocalRun, decodeLocalRun, encodeLocalRun, exportLocalRun, observedStep, runKey, sessionView } from './session.mjs?v=10';
 import { InvalidAction, NOTE_LIMIT } from './engine.mjs';

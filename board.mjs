@@ -1,5 +1,5 @@
 import { name } from './copy.mjs?v=10';
-import { NOTE_LIMIT } from './engine.mjs';
+import { LIVES, NOTE_LIMIT } from './engine.mjs';
 import { archiveAppearance } from './archive-ui/look.mjs?v=11';
 
 export const escape = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
@@ -110,6 +110,20 @@ function languageKeys(lang, label) {
   </div>`;
 }
 
+function runStatus(game, t) {
+  const current = String(game.life).padStart(2, '0');
+  const total = String(LIVES).padStart(2, '0');
+  const steps = Array.from({ length: LIVES }, (_, index) => {
+    const step = index + 1;
+    const state = game.phase === 'complete' || step < game.life ? 'finished' : step === game.life ? 'current' : 'ahead';
+    return `<span data-step="${state}"></span>`;
+  }).join('');
+  return `<div class="run-meta" id="setupSummary">
+    <span class="run-meta-item"><span>${t.universe}</span> <strong class="universe-code">${game.field}</strong></span>
+    <span class="run-meta-item"><span>${t.expedition}</span> <span class="run-count"><strong>${current}</strong> / ${total}</span><span class="run-steps" aria-hidden="true">${steps}</span></span>
+  </div>`;
+}
+
 export function createBoard(app) {
   app.innerHTML = `<div class="shell">
     <header class="topbar bevel" id="topbar"></header>
@@ -184,16 +198,16 @@ export function createBoard(app) {
     document.body.dataset.phase = phase;
     byId('stage').setAttribute('aria-label', t.expedition);
     if (window.AGIIWorld.apply(look) || !viewport.querySelector('.world-backdrop')) window.AGIIVisual.setBackdrop(viewport);
-    topbar.innerHTML = `<div class="brand" title="${name} · AGII"><span class="brand-emblem" aria-hidden="true"></span><span class="wordmark">AGII</span></div>
+    topbar.innerHTML = `<div class="brand"><span class="brand-emblem" aria-hidden="true"></span><span class="wordmark">${name}</span></div>
       <div class="lamp" id="connection" role="status"><span class="lamp-dot" aria-hidden="true"></span><span id="statusText">${status}</span></div>
       <div class="topbar-actions"><button id="export" class="key" type="button" data-ui="download">${b.export}</button><button id="stop" class="key" type="button" data-ui="quit">${b.quit}</button></div>`;
     notice.textContent = message;
     notice.hidden = !message;
-    const summary = `${t.universe} ${game.field} · ${escape(session.id.slice(0, 8))} · ${b.lives}`;
     const carried = carriedText(game, t);
-    setup.innerHTML = `<div class="plate"><span class="plate-text" id="setupSummary">${summary}</span>${languageKeys(lang, t.language)}<button class="key small" id="toggleSetup" data-ui="setup" type="button" aria-expanded="${setupOpen}" aria-controls="setupBody">${setupOpen ? b.hide : b.show}</button></div>
+    setup.innerHTML = `<div class="plate">${runStatus(game, t)}${languageKeys(lang, t.language)}<button class="key small" id="toggleSetup" data-ui="setup" type="button" aria-expanded="${setupOpen}" aria-controls="setupBody">${setupOpen ? b.hide : b.show}</button></div>
       <div class="setup-body web-setup" id="setupBody" ${setupOpen ? '' : 'hidden'}>
         <p>${t.roundsMeta} · ${t.worldMeta}</p>
+        <p class="setup-run-id">${t.runId} <code dir="ltr">${escape(session.id)}</code></p>
         ${carried ? `<details><summary>${t.notes}</summary><pre>${escape(carried)}</pre></details>` : ''}
         <details><summary>${t.how}</summary><p>${t.helpText}</p></details>
         <details><summary>${t.data}</summary><p>${t.dataText}</p></details>
