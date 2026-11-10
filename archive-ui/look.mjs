@@ -1,6 +1,5 @@
-/* 外观合成：引擎只管战斗；外观从「GUI 包」里各部件独立随机抽取，互不绑定。
- * 输入只有公开的字符串：宇宙（包名）、第几世、第几场。不读 seed、salt、机制、数值、牌名。
- * 同一 (宇宙, 世) 永远合成同一套外观，刷新页面不变；换一世、换一个宇宙就全换。 */
+/* Match the reference interface across expeditions. Scenery and figures use
+ * the archive's cosmetic streams, independent of cards and combat rules. */
 function fnv(str) {
   let h = 2166136261 >>> 0;
   for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; }
@@ -28,9 +27,16 @@ function fightFigure(universe, life, fight) {
   return { actor: pick('actor')(COUNT), kind: pick('kind')(4), variant: pick('variant')() };
 }
 
+const referenceLook = Object.freeze(lifeLook(screenshotPack, 1));
+
 export function archiveAppearance(runId, game) {
   const life = game?.life ?? 1;
-  const look = lifeLook(life === 1 ? screenshotPack : runId, life);
+  let look = referenceLook;
+  if (game?.field === 'II') {
+    const { scene, variant } = lifeLook(runId, life);
+    const nextScene = scene === referenceLook.scene ? (scene + 1 + variant % (COUNT - 1)) % COUNT : scene;
+    look = { ...referenceLook, scene: nextScene, variant };
+  }
   const figure = game?.phase === 'combat' ? game.camp ? -1 : fightFigure(runId, life, game.stage) : null;
   return { look, figure };
 }

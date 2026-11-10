@@ -1,7 +1,7 @@
 import { name, words } from './copy.mjs?v=10';
 import { icon } from './icons.mjs';
 import { renderCover } from './cover.mjs';
-import { boardPresentation, createBoard } from './board.mjs?v=10';
+import { boardPresentation, createBoard } from './board.mjs?v=11';
 import { installCroppedArt } from './archive-ui/cropped-art.mjs';
 import { applyLocalMove, createLocalRun, decodeLocalRun, encodeLocalRun, exportLocalRun, observedStep, runKey, sessionView } from './session.mjs?v=10';
 import { InvalidAction, NOTE_LIMIT } from './engine.mjs';
@@ -263,10 +263,17 @@ app.addEventListener('click', event => {
   else if (d.ui === 'enter' && session) go('/play');
   else if (d.ui === 'quit') go('/');
   else if (d.ui === 'latest') board?.latest();
+  else if (d.ui === 'setup') {
+    setupOpen = !setupOpen;
+    alert = null;
+    render();
+    const toggle = gameHost.querySelector('#toggleSetup');
+    if (setupOpen) toggle?.scrollIntoView({ block: 'nearest' });
+    toggle?.focus({ preventScroll: true });
+  }
   else if (d.ui) {
     alert = null;
     if (d.ui === 'new' || d.ui === 'enter') { modal = 'consent'; checked = false; }
-    else if (d.ui === 'setup') setupOpen = !setupOpen;
     else if (d.ui === 'ask-withdraw') modal = 'withdraw';
     else if (d.ui === 'close') modal = null;
     render();

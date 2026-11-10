@@ -1,13 +1,13 @@
 import { name } from './copy.mjs?v=10';
 import { NOTE_LIMIT } from './engine.mjs';
-import { archiveAppearance } from './archive-ui/look.mjs';
+import { archiveAppearance } from './archive-ui/look.mjs?v=11';
 
 export const escape = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
 
 export function boardPresentation(runId, game) {
   const { look, figure } = archiveAppearance(runId, game);
   const portrait = figure && figure !== -1 ? [figure.actor, figure.kind] : undefined;
-  return { version: 'archive-ui-1', world: look.scene, palette: look.palette, frame: look.frame, type: look.type, token: look.token,
+  return { version: 'archive-ui-2', world: look.scene, palette: look.palette, frame: look.frame, type: look.type, token: look.token,
     ...(portrait ? { portrait } : {}) };
 }
 
@@ -43,7 +43,7 @@ function promptText(game, t) {
 
 function actionText(entry, t) {
   const { input, observedBefore: before, log } = entry;
-  const label = input.kind === 'play' ? before.hand[input.index]?.name : t.board[input.kind];
+  const label = input.kind === 'play' ? before.hand[input.index]?.name : t.board[input.kind]?.toLowerCase();
   const feedback = log.map(row => {
     const heading = row.kind === 'end' ? t.board.endResult : t.logWords[row.kind]?.(row) ?? row.kind;
     const changes = row.changes?.map(({ label, from, to }) => `${label}: ${from}->${to}`).join(', ');
@@ -102,6 +102,13 @@ function addChoice(choice, choices, commands) {
 }
 
 const button = (label, action, extra = '') => `<button class="key ${extra}" type="button" data-ui="${action}">${label}</button>`;
+
+function languageKeys(lang, label) {
+  return `<div class="language-keys" role="group" aria-label="${label}">
+    <button type="button" class="key small" data-lang="en" lang="en" aria-pressed="${lang === 'en'}">EN</button>
+    <button type="button" class="key small" data-lang="zh" lang="zh-CN" aria-pressed="${lang === 'zh'}">中文</button>
+  </div>`;
+}
 
 export function createBoard(app) {
   app.innerHTML = `<div class="shell">
@@ -177,16 +184,16 @@ export function createBoard(app) {
     document.body.dataset.phase = phase;
     byId('stage').setAttribute('aria-label', t.expedition);
     if (window.AGIIWorld.apply(look) || !viewport.querySelector('.world-backdrop')) window.AGIIVisual.setBackdrop(viewport);
-    topbar.innerHTML = `<div class="brand"><span class="brand-emblem" aria-hidden="true"></span><span class="wordmark">${name}</span></div>
+    topbar.innerHTML = `<div class="brand" title="${name} · AGII"><span class="brand-emblem" aria-hidden="true"></span><span class="wordmark">AGII</span></div>
       <div class="lamp" id="connection" role="status"><span class="lamp-dot" aria-hidden="true"></span><span id="statusText">${status}</span></div>
       <div class="topbar-actions"><button id="export" class="key" type="button" data-ui="download">${b.export}</button><button id="stop" class="key" type="button" data-ui="quit">${b.quit}</button></div>`;
     notice.textContent = message;
     notice.hidden = !message;
     const summary = `${t.universe} ${game.field} · ${escape(session.id.slice(0, 8))} · ${b.lives}`;
     const carried = carriedText(game, t);
-    setup.innerHTML = `<div class="plate"><span class="plate-text" id="setupSummary">${summary}</span><button class="key small" id="toggleSetup" data-ui="setup" type="button" aria-expanded="${setupOpen}" aria-controls="setupBody">${setupOpen ? b.hide : b.show}</button></div>
+    setup.innerHTML = `<div class="plate"><span class="plate-text" id="setupSummary">${summary}</span>${languageKeys(lang, t.language)}<button class="key small" id="toggleSetup" data-ui="setup" type="button" aria-expanded="${setupOpen}" aria-controls="setupBody">${setupOpen ? b.hide : b.show}</button></div>
       <div class="setup-body web-setup" id="setupBody" ${setupOpen ? '' : 'hidden'}>
-        <div class="setup-line"><span>${t.roundsMeta} · ${t.worldMeta}</span><div class="language-keys" role="group" aria-label="${t.language}"><button type="button" class="key small" data-lang="en" lang="en" aria-pressed="${lang === 'en'}">EN</button><button type="button" class="key small" data-lang="zh" lang="zh-CN" aria-pressed="${lang === 'zh'}">中文</button></div></div>
+        <p>${t.roundsMeta} · ${t.worldMeta}</p>
         ${carried ? `<details><summary>${t.notes}</summary><pre>${escape(carried)}</pre></details>` : ''}
         <details><summary>${t.how}</summary><p>${t.helpText}</p></details>
         <details><summary>${t.data}</summary><p>${t.dataText}</p></details>

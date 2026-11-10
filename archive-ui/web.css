@@ -7,13 +7,13 @@
 .world-backdrop { object-fit: cover; }
 .idol img { width: 100%; height: 100%; object-fit: contain; object-position: center bottom; }
 .sr-only { position: absolute; top: 0; left: 0; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-.wordmark, .title-word { text-transform: uppercase; }
+.shell { max-width: none; }
 .web-setup { font-size: var(--small); }
 .web-setup summary { cursor: pointer; }
 .web-setup details p, .web-setup details pre { margin-top: 7px; }
-.setup-line, .language-keys { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
-.setup-line { justify-content: space-between; }
-.language-keys [aria-pressed="true"] { border-color: var(--w-accent2); }
+.language-keys { display: flex; align-items: center; flex: 0 0 auto; gap: 4px; }
+.language-keys .key { padding-inline: 8px; }
+.language-keys [aria-pressed="true"] { background: var(--well); border-color: var(--lo) var(--hi) var(--hi) var(--lo); }
 .web-modal {
   width: min(560px, calc(100% - 24px));
   max-height: calc(100% - 24px);
@@ -28,20 +28,26 @@
 .web-modal .primary { margin-left: 0; }
 .empty-hand-text { padding: 8px; color: var(--w-muted); font-size: var(--small); }
 
+@media (min-width: 851px) {
+  .workspace { grid-template-columns: minmax(0, 1fr) minmax(260px, 20.6%); }
+}
+
 @media (max-width: 850px) {
   .workspace { flex: none; grid-template-rows: auto 320px; }
   .stage { min-height: 560px; }
   .viewport { flex: 1 0 170px; }
   .hud, .tray { flex-shrink: 0; }
+  body[data-setup-open="false"] .setup { position: sticky; top: 0; z-index: 5; }
 }
 
 @media (max-width: 520px) {
   .topbar .brand { gap: 7px; }
-  .topbar .wordmark { font-size: clamp(17px, 4.75vw, 26px); letter-spacing: 1px; }
+  .topbar .wordmark { font-size: 26px; }
   .topbar-actions { gap: 4px; margin-left: auto; }
   .topbar-actions .key { padding-inline: 7px; }
   .topbar .brand-emblem { flex: 0 0 13px; height: 16px; }
-  .title-card .title-word { font-size: clamp(28px, 8vw, 48px); letter-spacing: 2px; padding-inline: 14px; }
+  .setup .plate { gap: 6px; }
+  .language-keys .key { padding-inline: 6px; min-height: 32px; }
   .console { flex-wrap: wrap; }
   .commands { gap: 4px; }
   .key.command { min-width: 0; padding-inline: 10px; }
