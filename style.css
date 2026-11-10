@@ -112,6 +112,7 @@ svg { flex-shrink: 0; vertical-align: middle; }
 .info-tile .button { margin-top: 14px; }
 .site-foot { margin-top: 55px; padding: 17px 0 25px; border-top: 1px solid var(--line); display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 11px; color: var(--dim); }
 .site-foot > * { display: inline-flex; align-items: center; gap: 8px; }
+.legacy-download { margin-top: 12px; }
 .foot-dot { width: 5px; height: 5px; }
 .flash { display: flex; align-items: center; gap: 14px; margin-top: 15px; padding: 10px 13px; border: 1px solid var(--line-warm); border-radius: 6px; background: #2b231a; color: #edd5ab; font-size: 13px; }
 .flash button { color: var(--gold-bright); background: transparent; border: 0; text-decoration: underline; }
