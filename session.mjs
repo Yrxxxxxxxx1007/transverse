@@ -1,5 +1,5 @@
 import { PROTOCOL, act, createGame, publicView } from './engine.mjs';
-import { consentVersion } from './copy.mjs?v=9';
+import { consentVersion } from './copy.mjs?v=10';
 import { appearance } from './worlds.mjs';
 
 export const runKey = 'transverse:expedition:1';

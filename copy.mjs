@@ -4,10 +4,10 @@ export const consentVersion = 'local-consent-1';
 export const words = {
   zh: {
     board: {
-      ready: '就绪', move: '你的回合', choose: '请选择', write: '写笔记', done: '已完成',
-      export: '导出', quit: '退出', show: '展开', hide: '收起', start: '开始', newGame: '新游戏',
+      move: '你的回合', choose: '请选择', write: '写笔记', done: '已完成',
+      export: '导出', quit: '退出', show: '展开', hide: '收起',
       record: '记录', latest: '最新', latestLabel: '滚动到最新记录', empty: '暂无记录',
-      titlePrompt: '展开设置并开始', lives: '远征 1–3', them: '对方', inHand: '手牌', left: n => `剩 ${n} 回合`,
+      lives: '远征 1–3', them: '对方', inHand: '手牌', left: n => `剩 ${n} 回合`,
       end: '结束', reset: '重置', leave: '离开', enter: '输入', submit: '提交笔记',
       rawLabel: '输入牌名、数字或操作', endResult: '结束回合',
     },
@@ -35,6 +35,7 @@ export const words = {
     end: '结束回合', reset: '重置训练营', leave: '离开训练营',
     saved: '已保存', temporary: '仅保留在当前页面', menu: '试玩菜单', pause: '返回首页，保留进度',
     saveUnavailable: '当前浏览器无法保存进度。你可以继续玩，关闭页面前请先下载试玩记录。',
+    draftUnavailable: '浏览器未能保存草稿。关闭前请复制笔记，或提交后导出记录。',
     withdraw: '退出并删除本次记录', withdrawTitle: '删除本次试玩？', withdrawBody: '这会删除浏览器中的本次进度、操作和笔记。此操作无法撤销。',
     withdrawDone: '本次试玩记录已删除。', log: '观测记录', notes: '随身笔记', noNotes: '这轮没有带入的笔记。',
     downloadRecord: '下载试玩记录', downloadPractice: '下载旧版练习记录',
@@ -61,10 +62,10 @@ export const words = {
   },
   en: {
     board: {
-      ready: 'Ready', move: 'Your move', choose: 'Choose', write: 'Write notes', done: 'Finished',
-      export: 'Export', quit: 'Quit', show: 'Show', hide: 'Hide', start: 'Start', newGame: 'New game',
+      move: 'Your move', choose: 'Choose', write: 'Write notes', done: 'Finished',
+      export: 'Export', quit: 'Quit', show: 'Show', hide: 'Hide',
       record: 'Record', latest: 'Latest', latestLabel: 'Scroll to the latest entry', empty: 'Nothing yet',
-      titlePrompt: 'Set up and press Start', lives: 'Lives 1–3', them: 'Them', inHand: 'In hand', left: n => `${n} left`,
+      lives: 'Lives 1–3', them: 'Them', inHand: 'In hand', left: n => `${n} left`,
       end: 'End', reset: 'Reset', leave: 'Leave', enter: 'Enter', submit: 'Submit notes',
       rawLabel: 'Type an operation name or a number', endResult: 'end turn',
     },
@@ -92,6 +93,7 @@ export const words = {
     end: 'End turn', reset: 'Reset camp', leave: 'Leave camp',
     saved: 'Saved', temporary: 'This page only', menu: 'Game menu', pause: 'Back to home, keep progress',
     saveUnavailable: 'This browser cannot save your progress. You can keep playing and download the record before closing this page.',
+    draftUnavailable: 'The browser could not save this draft. Before closing the page, copy it or submit it and export the record.',
     withdraw: 'Leave and delete this run', withdrawTitle: 'Delete this run?', withdrawBody: 'This deletes this run’s progress, actions, and notes from this browser. Deletion is permanent.',
     withdrawDone: 'This run has been deleted.', log: 'Observation log', notes: 'Carried notes', noNotes: 'No notes came into this expedition.',
     downloadRecord: 'Download play record', downloadPractice: 'Download earlier practice record',

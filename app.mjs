@@ -1,7 +1,9 @@
-import { name, words } from './copy.mjs?v=9';
-import { boardPresentation, createBoard } from './board.mjs';
+import { name, words } from './copy.mjs?v=10';
+import { icon } from './icons.mjs';
+import { renderCover } from './cover.mjs';
+import { boardPresentation, createBoard } from './board.mjs?v=10';
 import { installCroppedArt } from './archive-ui/cropped-art.mjs';
-import { applyLocalMove, createLocalRun, decodeLocalRun, encodeLocalRun, exportLocalRun, observedStep, runKey, sessionView } from './session.mjs?v=9';
+import { applyLocalMove, createLocalRun, decodeLocalRun, encodeLocalRun, exportLocalRun, observedStep, runKey, sessionView } from './session.mjs?v=10';
 import { InvalidAction, NOTE_LIMIT } from './engine.mjs';
 import { loadRun as loadPractice } from './practice/game.mjs';
 import { exportRecord as exportPractice, loadRecord as loadPracticeRecord } from './practice/record.mjs';
@@ -13,6 +15,13 @@ import './archive-ui/game-view.js';
 
 const app = document.querySelector('#app');
 const announcer = document.querySelector('#announce');
+const stylesheets = document.querySelectorAll('[data-surface-style]');
+const themeColor = document.querySelector('meta[name="theme-color"]');
+app.innerHTML = '<div id="cover"></div><div id="game" hidden></div><div id="dialog-root"></div>';
+const cover = app.querySelector('#cover');
+const gameHost = app.querySelector('#game');
+const dialogHost = app.querySelector('#dialog-root');
+let board;
 const fromStorage = (key, fallback = null) => { try { return localStorage.getItem(key); } catch { return fallback; } };
 function putStorage(key, value) {
   try {
@@ -25,7 +34,6 @@ const basePath = new URL('./', import.meta.url).pathname;
 const assetUrl = path => `${basePath}${path}?v=9`;
 const pageUrl = destination => `${basePath}${destination === '/play' ? '#play' : ''}`;
 installCroppedArt(assetUrl);
-const board = createBoard(app);
 const drafts = new Map();
 let rawDraft = '';
 let lang = (fromStorage('agii:language') ?? fromStorage('transverse.practice.language')) === 'zh' ? 'zh' : 'en';
@@ -53,15 +61,30 @@ function previousPractice() {
 }
 const oldPractice = previousPractice();
 
-function dialog() {
+function dialog(playing) {
   if (!modal) return '';
-  const cancel = `<button class="key" type="button" data-ui="close">${t.cancel}</button>`;
+  const secondary = playing ? 'key' : 'button secondary';
+  const primary = playing ? 'key primary' : 'button primary';
+  const actions = playing ? 'setup-footer' : 'dialog-actions';
+  const cancel = `<button class="${secondary}" type="button" data-ui="close">${t.cancel}</button>`;
+  const close = playing ? '' : `<button class="icon-button dialog-close" type="button" data-ui="close" aria-label="${t.close}">${icon('cross')}</button>`;
+  const tag = playing ? '' : `<p class="eyebrow">${modal === 'consent' ? t.consentTag : t.data}</p>`;
   const inner = modal === 'consent' ? `<h2 id="dialog-title">${t.consentTitle}</h2><p>${t.consentBody}</p><p>${t.consentVoluntary}</p>
     ${session?.game.phase === 'complete' ? `<p>${t.replaceRun}</p>` : ''}
-    <form id="consent-form"><label class="check"><input type="checkbox" name="consent" ${checked ? 'checked' : ''} required><span>${t.consentCheck}</span></label>
-    <div class="setup-footer">${cancel}<button class="key primary" type="submit" ${checked ? '' : 'disabled'}>${t.consentAccept}</button></div></form>`
-    : `<h2 id="dialog-title">${t.withdrawTitle}</h2><p>${t.withdrawBody}</p><div class="setup-footer">${cancel}<button class="key primary" type="button" data-ui="withdraw">${t.withdraw}</button></div>`;
-  return `<dialog class="web-modal bevel" id="modal" aria-labelledby="dialog-title">${inner}${alert ? `<p role="status">${t[alert]}</p>` : ''}</dialog>`;
+    <form id="consent-form"><label class="${playing ? 'check' : 'check-label'}"><input type="checkbox" name="consent" ${checked ? 'checked' : ''} required><span>${t.consentCheck}</span></label>
+    <div class="${actions}">${cancel}<button class="${primary}" type="submit" ${checked ? '' : 'disabled'}>${t.consentAccept}${playing ? '' : icon('arrow')}</button></div></form>`
+    : `<h2 id="dialog-title">${t.withdrawTitle}</h2><p>${t.withdrawBody}</p><div class="${actions}">${cancel}<button class="${primary}" type="button" data-ui="withdraw">${t.withdraw}</button></div>`;
+  return `<dialog class="${playing ? 'web-modal bevel' : ''}" id="modal" aria-labelledby="dialog-title">${close}${tag}${inner}${alert ? `<p class="dialog-alert" role="status">${t[alert]}</p>` : ''}</dialog>`;
+}
+
+function showSurface(playing) {
+  const surface = playing ? 'game' : 'cover';
+  if (document.body.dataset.surface !== surface) {
+    for (const stylesheet of stylesheets) stylesheet.media = stylesheet.dataset.surfaceStyle === surface ? 'all' : 'not all';
+    document.body.dataset.surface = surface;
+  }
+  cover.hidden = playing;
+  gameHost.hidden = !playing;
 }
 
 function render() {
@@ -69,12 +92,21 @@ function render() {
   document.documentElement.lang = lang === 'zh' ? 'zh-CN' : 'en';
   document.title = name;
   const playing = page === '/play' && !!session;
-  const key = playing && session.game.phase === 'note' ? draftKey(session.game) : null;
-  const draft = key ? drafts.get(key) ?? fromStorage(key) ?? '' : '';
   const message = alert && !modal ? t[alert] : !saved && session ? t.saveUnavailable : '';
-  board.render({ session, playing, setupOpen, message, entries, oldPractice, draft, raw: rawDraft, lang, t });
-  app.querySelector('#dialog-root').innerHTML = dialog();
-  const shown = app.querySelector('#modal');
+  showSurface(playing);
+  if (playing) {
+    board ??= createBoard(gameHost);
+    const key = session.game.phase === 'note' ? draftKey(session.game) : null;
+    const pending = key ? drafts.get(key) : null;
+    const draft = pending?.text ?? (key ? fromStorage(key) ?? '' : '');
+    board.render({ session, setupOpen, message, entries, draft, draftUnavailable: pending?.saved === false, raw: rawDraft, lang, t });
+    themeColor.content = window.AGIIWorld.current(document).palette.bg;
+  } else {
+    renderCover(cover, { t, lang, session, oldPractice, message, assetUrl, homeUrl: pageUrl('/') });
+    themeColor.content = '#101114';
+  }
+  dialogHost.innerHTML = dialog(playing);
+  const shown = dialogHost.querySelector('#modal');
   if (shown) {
     if (typeof shown.showModal === 'function') shown.showModal();
     else shown.setAttribute('open', '');
@@ -142,7 +174,7 @@ function start() {
 }
 
 function move(kind, fields = {}) {
-  if (!session || modal || refreshLocalRun()) return;
+  if (page !== '/play' || !session || modal || refreshLocalRun()) return;
   const game = session.game;
   const input = { kind, ...fields };
   alert = null;
@@ -195,7 +227,7 @@ function downloadRecord(previous = false) {
 
 function enterCommand(text) {
   const raw = text.trim().toLowerCase();
-  if (!raw || !session || modal) return;
+  if (!raw || page !== '/play' || !session || modal) return;
   const choices = [...app.querySelectorAll('#choices [data-action]')];
   const commands = [...app.querySelectorAll('#commands [data-action]')];
   const choice = /^\d+$/.test(raw) ? choices[Number(raw) - 1]
@@ -211,10 +243,18 @@ function enterCommand(text) {
 }
 
 app.addEventListener('click', event => {
-  const control = event.target.closest('button');
+  const control = event.target.closest('button, a[data-page]');
   if (!control || control.disabled) return;
   const d = control.dataset;
-  if (d.lang) { lang = d.lang; putStorage('agii:language', lang); render(); }
+  if (d.lang) {
+    lang = d.lang;
+    putStorage('agii:language', lang);
+    render();
+    (page === '/play' ? gameHost : cover).querySelector(`[data-lang="${lang}"]`)?.focus({ preventScroll: true });
+  } else if (d.page && !event.ctrlKey && !event.metaKey && !event.shiftKey && !event.altKey) {
+    event.preventDefault();
+    go(d.page);
+  }
   else if (d.action === 'skip') move('note', { text: '' });
   else if (d.action) move(d.action, d.index === undefined ? {} : { index: Number(d.index) });
   else if (d.ui === 'download' && run) downloadRecord();
@@ -222,7 +262,7 @@ app.addEventListener('click', event => {
   else if (d.ui === 'withdraw') withdraw();
   else if (d.ui === 'enter' && session) go('/play');
   else if (d.ui === 'quit') go('/');
-  else if (d.ui === 'latest') board.latest();
+  else if (d.ui === 'latest') board?.latest();
   else if (d.ui) {
     alert = null;
     if (d.ui === 'new' || d.ui === 'enter') { modal = 'consent'; checked = false; }
@@ -244,8 +284,9 @@ app.addEventListener('input', event => {
   if (event.target.id !== 'note-input') return;
   const text = event.target.value;
   const key = draftKey(session.game);
-  drafts.set(key, text);
-  putStorage(key, text);
+  const stored = putStorage(key, text);
+  drafts.set(key, { text, saved: stored });
+  document.querySelector('#draft-status').hidden = stored;
   document.querySelector('#note-count').textContent = `${text.length} / ${NOTE_LIMIT}`;
 });
 app.addEventListener('submit', event => {

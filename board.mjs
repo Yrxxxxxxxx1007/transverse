@@ -1,4 +1,4 @@
-import { name } from './copy.mjs?v=9';
+import { name } from './copy.mjs?v=10';
 import { NOTE_LIMIT } from './engine.mjs';
 import { archiveAppearance } from './archive-ui/look.mjs';
 
@@ -112,7 +112,6 @@ export function createBoard(app) {
       <section class="stage bevel" id="stage" aria-label="Game">
         <div class="viewport" id="viewport">
           <div class="idol" id="idol" aria-hidden="true" hidden></div>
-          <div class="title-card" id="empty"></div>
           <pre class="dialogue" id="context" hidden></pre>
         </div>
         <div class="hud" id="hud" hidden></div>
@@ -123,10 +122,10 @@ export function createBoard(app) {
         <div class="transcript" id="transcript" tabindex="0"></div>
       </aside>
     </main>
-  </div><div id="dialog-root"></div>`;
+  </div>`;
   const byId = id => app.querySelector(`#${id}`);
   const topbar = byId('topbar'), setup = byId('setup'), notice = byId('notice'), viewport = byId('viewport');
-  const empty = byId('empty'), context = byId('context'), hud = byId('hud'), idol = byId('idol'), tray = byId('inputArea');
+  const context = byId('context'), hud = byId('hud'), idol = byId('idol'), tray = byId('inputArea');
   const transcript = byId('transcript'), recordPlate = byId('recordPlate');
   let shownEntries;
   let shownCount = 0;
@@ -168,35 +167,32 @@ export function createBoard(app) {
     transcript.append(item);
   }
 
-  function render({ session, playing, setupOpen, message, entries, oldPractice, draft, raw, lang, t }) {
-    const game = playing ? session.game : null;
+  function render({ session, setupOpen, message, entries, draft, draftUnavailable, raw, lang, t }) {
+    const game = session.game;
     const b = t.board;
-    const phase = game ? game.phase === 'combat' ? 'act' : game.phase === 'note' ? 'note' : game.phase === 'complete' ? 'done' : 'pick' : 'idle';
-    const status = { idle: b.ready, act: b.move, pick: b.choose, note: b.write, done: b.done }[phase];
-    const { look, figure } = archiveAppearance(session?.id, session?.game);
+    const phase = game.phase === 'combat' ? 'act' : game.phase === 'note' ? 'note' : game.phase === 'complete' ? 'done' : 'pick';
+    const status = { act: b.move, pick: b.choose, note: b.write, done: b.done }[phase];
+    const { look, figure } = archiveAppearance(session.id, game);
     document.body.dataset.setupOpen = String(setupOpen);
     document.body.dataset.phase = phase;
     byId('stage').setAttribute('aria-label', t.expedition);
     if (window.AGIIWorld.apply(look) || !viewport.querySelector('.world-backdrop')) window.AGIIVisual.setBackdrop(viewport);
     topbar.innerHTML = `<div class="brand"><span class="brand-emblem" aria-hidden="true"></span><span class="wordmark">${name}</span></div>
       <div class="lamp" id="connection" role="status"><span class="lamp-dot" aria-hidden="true"></span><span id="statusText">${status}</span></div>
-      <div class="topbar-actions"><button id="export" class="key" type="button" data-ui="download"${session ? '' : ' disabled'}>${b.export}</button><button id="stop" class="key" type="button" data-ui="quit"${game ? '' : ' disabled'}>${b.quit}</button></div>`;
+      <div class="topbar-actions"><button id="export" class="key" type="button" data-ui="download">${b.export}</button><button id="stop" class="key" type="button" data-ui="quit">${b.quit}</button></div>`;
     notice.textContent = message;
     notice.hidden = !message;
-    const summary = session ? `${t.universe} ${session.game.field} · ${escape(session.id.slice(0, 8))} · ${b.lives}` : b.newGame;
-    const start = session ? session.game.phase === 'complete' ? t.report : t.resume : b.start;
-    const carried = carriedText(session?.game, t);
+    const summary = `${t.universe} ${game.field} · ${escape(session.id.slice(0, 8))} · ${b.lives}`;
+    const carried = carriedText(game, t);
     setup.innerHTML = `<div class="plate"><span class="plate-text" id="setupSummary">${summary}</span><button class="key small" id="toggleSetup" data-ui="setup" type="button" aria-expanded="${setupOpen}" aria-controls="setupBody">${setupOpen ? b.hide : b.show}</button></div>
       <div class="setup-body web-setup" id="setupBody" ${setupOpen ? '' : 'hidden'}>
-        <div class="setup-line"><span>${t.roundsMeta} · ${t.worldMeta}</span><div class="language-keys" role="group" aria-label="${t.language}"><button type="button" class="key small" data-lang="en" aria-pressed="${lang === 'en'}">EN</button><button type="button" class="key small" data-lang="zh" aria-pressed="${lang === 'zh'}">中文</button></div></div>
+        <div class="setup-line"><span>${t.roundsMeta} · ${t.worldMeta}</span><div class="language-keys" role="group" aria-label="${t.language}"><button type="button" class="key small" data-lang="en" lang="en" aria-pressed="${lang === 'en'}">EN</button><button type="button" class="key small" data-lang="zh" lang="zh-CN" aria-pressed="${lang === 'zh'}">中文</button></div></div>
         ${carried ? `<details><summary>${t.notes}</summary><pre>${escape(carried)}</pre></details>` : ''}
         <details><summary>${t.how}</summary><p>${t.helpText}</p></details>
-        <details><summary>${t.data}</summary><p>${t.dataText}</p>${oldPractice ? button(t.downloadPractice, 'download-practice', 'small') : ''}</details>
-        <div class="setup-footer">${session ? button(t.withdraw, 'ask-withdraw', 'small') : ''}${session?.game.phase === 'complete' ? button(t.replay, 'new') : ''}${!game ? button(start, 'enter', 'primary') : ''}</div>
+        <details><summary>${t.data}</summary><p>${t.dataText}</p></details>
+        <div class="setup-footer">${button(t.withdraw, 'ask-withdraw', 'small')}${game.phase === 'complete' ? button(t.replay, 'new') : ''}</div>
       </div>`;
-    empty.hidden = Boolean(game);
-    if (!game) empty.innerHTML = `<h1 class="title-word">${name}</h1><p>${session ? start : b.titlePrompt}</p>`;
-    const text = game ? sceneText(session, entries, t) : '';
+    const text = sceneText(session, entries, t);
     if (context.textContent !== text) { context.textContent = text; context.scrollTop = 0; }
     context.hidden = !text;
     hud.hidden = idol.hidden = phase !== 'act';
@@ -205,9 +201,9 @@ export function createBoard(app) {
       const key = JSON.stringify(figure);
       if (figureKey !== key) { window.AGIIVisual.setFigure(idol, figure); figureKey = key; }
     }
-    tray.hidden = phase === 'idle' || phase === 'done';
+    tray.hidden = phase === 'done';
     if (phase === 'note') {
-      tray.innerHTML = `<form class="note-form" id="note-form"><textarea class="note-input" id="note-input" name="text" aria-label="${t.placeholder}" placeholder="${t.placeholder}" spellcheck="false" rows="4" maxlength="${NOTE_LIMIT}"></textarea><div class="note-actions setup-footer"><span id="note-count">${draft.length} / ${NOTE_LIMIT}</span><button class="key small" type="button" data-action="skip">${t.skip}</button><button class="key primary" type="submit">${b.submit}</button></div></form>`;
+      tray.innerHTML = `<form class="note-form" id="note-form"><textarea class="note-input" id="note-input" name="text" aria-label="${t.placeholder}" placeholder="${t.placeholder}" spellcheck="false" rows="4" maxlength="${NOTE_LIMIT}"></textarea><p id="draft-status" class="field-label" role="status"${draftUnavailable ? '' : ' hidden'}>${t.draftUnavailable}</p><div class="note-actions setup-footer"><span id="note-count">${draft.length} / ${NOTE_LIMIT}</span><button class="key small" type="button" data-action="skip">${t.skip}</button><button class="key primary" type="submit">${b.submit}</button></div></form>`;
       tray.querySelector('textarea').value = draft;
     } else if (phase === 'act' || phase === 'pick') {
       tray.innerHTML = `<div id="actionInput"><div class="hand ${phase === 'pick' ? 'options' : ''}" id="choices"></div><div class="console"><div class="commands" id="commands"></div><form class="raw-form" id="rawForm"><input id="rawInput" type="text" aria-label="${b.rawLabel}" autocomplete="off" spellcheck="false"><button class="key small" id="rawSubmit" type="submit">${b.enter}</button></form></div></div>`;
