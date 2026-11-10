@@ -1,5 +1,5 @@
 import { PROTOCOL, act, createGame, publicView } from './engine.mjs';
-import { consentVersion } from './copy.mjs?v=8';
+import { consentVersion } from './copy.mjs?v=9';
 import { appearance } from './worlds.mjs';
 
 export const runKey = 'transverse:expedition:1';
@@ -50,16 +50,26 @@ export function sessionView(run) {
   return run ? { id: run.id, version: run.actions.length, game: publicView(run.state) } : null;
 }
 
-export function applyLocalMove(run, input, language) {
+export function applyLocalMove(run, input, language, presentation) {
   const state = JSON.parse(JSON.stringify(run.state));
   act(state, input);
   const last = run.actions[run.actions.length - 1];
   const elapsedMs = Math.max(last?.elapsedMs ?? 0, Date.now() - run.startedAt);
-  return { ...run, state, actions: [...run.actions, { input, language, elapsedMs }] };
+  const entry = { input, language, elapsedMs, ...(presentation ? { presentation } : {}) };
+  return { ...run, state, actions: [...run.actions, entry] };
 }
 
 function observation({ log, carried, lives, ...shown }) {
   return shown;
+}
+
+export function observedStep(input, before, after, logSeq = before.log[before.log.length - 1]?.id ?? 0) {
+  return {
+    input,
+    observedBefore: observation(before),
+    observedAfter: observation(after),
+    log: after.log.filter(row => row.id > logSeq),
+  };
 }
 
 export function exportLocalRun(run) {
@@ -67,17 +77,15 @@ export function exportLocalRun(run) {
   const actions = run.actions.map((entry, index) => {
     const before = publicView(state);
     const seq = state.logSeq;
-    const look = appearance(run.id, before);
     const { result } = act(state, entry.input);
     const after = publicView(state);
+    const look = entry.presentation ? null : appearance(run.id, before);
     return {
       step: index + 1,
       ...entry,
       ...(result ? { result } : {}),
-      observedBefore: observation(before),
-      observedAfter: observation(after),
-      log: after.log.filter(row => row.id > seq),
-      presentation: { world: look.theme.id, ...(before.phase === 'combat' ? { portrait: [look.actor, look.form] } : {}) },
+      ...observedStep(entry.input, before, after, seq),
+      presentation: entry.presentation ?? { world: look.theme.id, ...(before.phase === 'combat' ? { portrait: [look.actor, look.form] } : {}) },
     };
   });
   return {

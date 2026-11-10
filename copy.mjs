@@ -3,6 +3,14 @@ export const consentVersion = 'local-consent-1';
 
 export const words = {
   zh: {
+    board: {
+      ready: '就绪', move: '你的回合', choose: '请选择', write: '写笔记', done: '已完成',
+      export: '导出', quit: '退出', show: '展开', hide: '收起', start: '开始', newGame: '新游戏',
+      record: '记录', latest: '最新', latestLabel: '滚动到最新记录', empty: '暂无记录',
+      titlePrompt: '展开设置并开始', lives: '远征 1–3', them: '对方', inHand: '手牌', left: n => `剩 ${n} 回合`,
+      end: '结束', reset: '重置', leave: '离开', enter: '输入', submit: '提交笔记',
+      rawLabel: '输入牌名、数字或操作', endResult: '结束回合',
+    },
     language: '界面语言', home: '首页', how: '如何参与', data: '数据说明',
     pilot: '人类试玩 / 01', heroTagline: '穿过不同宇宙，发现隐藏规律。',
     intro: '从陌生的符号和卡牌开始。观察每一步的变化，把你学到的规律带进下一个宇宙。',
@@ -52,6 +60,14 @@ export const words = {
     outOfSync: '已同步最新进度。请查看当前界面再操作。', invalid: '这个操作暂时无法执行。',
   },
   en: {
+    board: {
+      ready: 'Ready', move: 'Your move', choose: 'Choose', write: 'Write notes', done: 'Finished',
+      export: 'Export', quit: 'Quit', show: 'Show', hide: 'Hide', start: 'Start', newGame: 'New game',
+      record: 'Record', latest: 'Latest', latestLabel: 'Scroll to the latest entry', empty: 'Nothing yet',
+      titlePrompt: 'Set up and press Start', lives: 'Lives 1–3', them: 'Them', inHand: 'In hand', left: n => `${n} left`,
+      end: 'End', reset: 'Reset', leave: 'Leave', enter: 'Enter', submit: 'Submit notes',
+      rawLabel: 'Type an operation name or a number', endResult: 'end turn',
+    },
     language: 'Interface language', home: 'Home', how: 'How to play', data: 'Data notice',
     pilot: 'Human pilot / 01', heroTagline: 'Discover rules across universes.',
     intro: 'Start with unfamiliar cards and symbols. Watch what changes with each move, then take what you learn into the next universe.',
